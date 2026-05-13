@@ -5,10 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Deep Learning Explorer - 交互式深度学习模型可视化与学习平台，涵盖CNN、Transformer、扩散模型等经典架构">
   <meta name="theme-color" content="#000000">
+
+  <!-- 防止 FOUC：在 CSS 加载前优先应用主题 -->
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('dl_theme');
+        if (!theme) {
+          theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+
   <!-- Content Security Policy -->
   <!-- 注意：当前使用内联事件处理器和样式，需要 'unsafe-inline' 支持 -->
   <!-- 生产环境建议：将内联事件迁移到 addEventListener，内联样式迁移到 CSS 文件，然后移除 'unsafe-inline' -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; object-src 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; object-src 'none';">
   <title>Deep Learning Explorer - 深度学习模型可视化平台</title>
 
   <!-- System font for Apple style (SF Pro on Apple devices, system fonts elsewhere) -->
@@ -16,9 +32,40 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- 骨架屏：首屏加载期间显示 -->
+  <div id="app-skeleton" class="app-skeleton" aria-hidden="true">
+    <div class="skeleton-header">
+      <div class="skeleton-logo"></div>
+      <div class="skeleton-nav">
+        <div class="skeleton-nav-item"></div>
+        <div class="skeleton-nav-item"></div>
+        <div class="skeleton-nav-item"></div>
+        <div class="skeleton-nav-item"></div>
+      </div>
+    </div>
+    <div class="skeleton-hero">
+      <div class="skeleton-hero-title"></div>
+      <div class="skeleton-hero-subtitle"></div>
+      <div class="skeleton-hero-stats">
+        <div class="skeleton-stat"></div>
+        <div class="skeleton-stat"></div>
+        <div class="skeleton-stat"></div>
+        <div class="skeleton-stat"></div>
+      </div>
+    </div>
+    <div class="skeleton-grid">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  </div>
+
   <!-- 跳过导航链接（无障碍支持） -->
   <a href="#app" class="skip-link">跳过导航</a>
 
@@ -94,7 +141,7 @@
   <!-- 屏幕阅读器通知区域：用于播报视图切换 -->
   <div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-  <main id="app" class="app">
+  <main id="app" class="app" aria-live="polite" aria-atomic="false">
 
     <!-- ===== 首页视图 ===== -->
     <section id="homeView" class="view active" aria-label="首页">
@@ -723,6 +770,56 @@
         </div>
       </div>
       
+      <!-- Spotlight 方案选择 -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <h3><span aria-hidden="true">🎯</span> Hero 光影效果</h3>
+        </div>
+        <p class="guide-subtitle" style="margin-bottom:12px;">选择鼠标在 Hero 区域时的光影效果（单选）</p>
+        <div class="spotlight-options">
+          <label class="spotlight-option">
+            <input type="radio" name="spotlightScheme" value="A" checked onchange="setSpotlightScheme('A')">
+            <span class="spotlight-option-card">
+              <strong>方案 A</strong>
+              <span>Apple 纯净追光</span>
+              <small>柔和蓝紫渐变跟随鼠标</small>
+            </span>
+          </label>
+          <label class="spotlight-option">
+            <input type="radio" name="spotlightScheme" value="B" onchange="setSpotlightScheme('B')">
+            <span class="spotlight-option-card">
+              <strong>方案 B</strong>
+              <span>Vercel 极简光晕</span>
+              <small>极淡光晕，几乎不可见</small>
+            </span>
+          </label>
+          <label class="spotlight-option">
+            <input type="radio" name="spotlightScheme" value="C" onchange="setSpotlightScheme('C')">
+            <span class="spotlight-option-card">
+              <strong>方案 C</strong>
+              <span>Linear 边框流光</span>
+              <small>卡片边缘旋转渐变边框</small>
+            </span>
+          </label>
+          <label class="spotlight-option">
+            <input type="radio" name="spotlightScheme" value="D" onchange="setSpotlightScheme('D')">
+            <span class="spotlight-option-card">
+              <strong>方案 D</strong>
+              <span>Stripe 卡片内发光</span>
+              <small>鼠标位置产生内部光斑</small>
+            </span>
+          </label>
+          <label class="spotlight-option">
+            <input type="radio" name="spotlightScheme" value="E" onchange="setSpotlightScheme('E')">
+            <span class="spotlight-option-card">
+              <strong>方案 E</strong>
+              <span>Magic UI 光束连接</span>
+              <small>动态虚线光束连接元素</small>
+            </span>
+          </label>
+        </div>
+      </div>
+
       <p class="guide-tip"><span aria-hidden="true">💡</span> 提示：移动鼠标可以唤醒偷懒中的字母</p>
     </div>
   </div>
@@ -769,8 +866,37 @@
     }
   </script>
 
+  <!-- ==================== 反馈按钮 ==================== -->
+  <button class="feedback-btn" id="feedbackBtn" onclick="openModal('feedbackModal')" aria-label="提交反馈">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    反馈
+  </button>
+
+  <!-- ==================== 反馈模态框 ==================== -->
+  <div class="modal-overlay" id="feedbackModal" role="dialog" aria-modal="true" aria-labelledby="feedbackTitle">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal('feedbackModal')" aria-label="关闭">&times;</button>
+      <h2 id="feedbackTitle">提交反馈</h2>
+      <form id="feedbackForm">
+        <div class="form-group">
+          <label for="feedbackType">反馈类型</label>
+          <select id="feedbackType" required>
+            <option value="bug">Bug 报告</option>
+            <option value="feature">功能建议</option>
+            <option value="other">其他</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="feedbackContent">反馈内容</label>
+          <textarea id="feedbackContent" rows="4" required placeholder="请描述您遇到的问题或建议..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">提交反馈</button>
+      </form>
+    </div>
+  </div>
+
   <!-- ==================== 脚本 ==================== -->
-  <script src="viz-configs.js"></script>
-  <script src="app.js"></script>
+  <script type="module" src="js/viz-configs.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>

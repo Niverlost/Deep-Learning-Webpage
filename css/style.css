@@ -12,18 +12,18 @@
   --bg-card: rgba(36, 36, 38, 0.60);
   --bg-card-hover: rgba(48, 48, 50, 0.70);
   --bg-input: rgba(36, 36, 38, 0.60);
-  
+
   /* Text - High contrast like Apple */
   --text-primary: #f5f5f7;
   --text-secondary: #86868b;
   --text-muted: #6e6e73; /* WCAG AA 对比度要求 4.5:1 - 调整为更深色以满足对比度标准 */
-  
+
   /* Apple Blue Accent - The signature color */
   --accent-primary: #007AFF;
   --accent-secondary: #0A84FF;
   --accent-light: rgba(0, 122, 255, 0.15);
   --accent-glow: rgba(0, 122, 255, 0.3);
-  
+
   /* Layer Colors - Vibrant Apple style */
   --layer-input: #30D158;
   --layer-conv: #BF5AF2;
@@ -34,7 +34,7 @@
   --layer-activation: #FF375F;
   --layer-output: #FF453A;
   --layer-custom: #BF5AF2;
-  
+
   /* Status - Apple style */
   --success: #30D158;
   --success-light: rgba(48, 209, 88, 0.15);
@@ -42,24 +42,24 @@
   --danger-light: rgba(255, 69, 58, 0.15);
   --warning: #FF9F0A;
   --warning-light: rgba(255, 159, 10, 0.15);
-  
+
   /* Glass Material - KEY APPLE FEATURE */
   --glass-bg: rgba(255, 255, 255, 0.08);
   --glass-border: rgba(255, 255, 255, 0.18);
   --glass-hover: rgba(255, 255, 255, 0.12);
   --glass-blur: 20px;
-  
+
   /* Borders */
   --border: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(255, 255, 255, 0.16);
   --border-active: rgba(0, 122, 255, 0.5);
-  
+
   /* Apple Shadows - Soft & Diffuse */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.30);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.40);
-  
+
   /* Apple Border Radius - Very Rounded */
   --radius-xs: 8px;
   --radius-sm: 12px;
@@ -67,7 +67,7 @@
   --radius-lg: 20px;
   --radius-xl: 28px;
   --radius-full: 9999px;
-  
+
   /* Apple Transitions - Smooth Spring */
   --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-in-out: cubic-bezier(0.42, 0, 0.58, 1);
@@ -76,17 +76,17 @@
   --duration-fast: 200ms;
   --duration-normal: 300ms;
   --duration-slow: 500ms;
-  
+
   /* Typography - Apple uses system font */
   --font-heading: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
   --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
-  
+
   /* Layout */
   --header-height: 48px;
   --container-max: 980px;
   --container-padding: 20px;
-  
+
   /* V6创新：字母尺寸CSS变量化 */
   --letter-D-w: 76px; --letter-D-h: 120px;
   --letter-e-w: 60px; --letter-e-h: 88px;
@@ -127,10 +127,10 @@
   --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.10);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
-  
+
   --accent-light: rgba(0, 122, 255, 0.10);
   --accent-glow: rgba(0, 122, 255, 0.20);
-  
+
   --success-light: rgba(48, 209, 88, 0.10);
   --danger-light: rgba(255, 69, 58, 0.10);
   --warning-light: rgba(255, 159, 10, 0.10);
@@ -155,6 +155,14 @@
   background: radial-gradient(
     400px circle at var(--tilt-x, 50%) var(--tilt-y, 50%),
     rgba(0, 122, 255, 0.04) 0%,
+    transparent 60%
+  );
+}
+
+[data-theme="light"] .hero-stats.stripe-glow::before {
+  background: radial-gradient(
+    300px circle at var(--tilt-x, 50%) var(--tilt-y, 50%),
+    rgba(0, 100, 220, 0.08) 0%,
     transparent 60%
   );
 }
@@ -366,8 +374,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   overflow-x: hidden;
-  transition: background-color var(--duration-normal) var(--ease-out), 
-              color var(--duration-normal) var(--ease-out);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 a {
@@ -458,18 +465,21 @@ pre {
 .app {
   padding-top: var(--header-height);
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 var(--container-padding);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .section {
   max-width: var(--container-max);
   margin: 0 auto;
   padding: 0 var(--container-padding) 80px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .section-title {
@@ -562,6 +572,11 @@ pre {
   background: var(--glass-bg);
 }
 
+.nav-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
 .nav-btn.active {
   color: var(--accent-primary);
   background: var(--accent-light);
@@ -625,17 +640,6 @@ pre {
   transform-origin: bottom center;
 }
 
-/* V11创新：字母身体微光效果 */
-.letter-body::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 50%);
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: 2;
-}
-
 .letter-body .letter-text {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
   font-weight: 900;
@@ -643,7 +647,6 @@ pre {
   user-select: none;
   position: relative;
   z-index: 1;
-  filter: drop-shadow(0 2px 0 rgba(0,0,0,0.15));
 }
 
 /* ===== Duolingo 风格大圆眼 ===== */
@@ -660,7 +663,6 @@ pre {
   border-radius: 50%;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 0 1.5px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.1);
   transition: height 0.15s ease, width 0.15s ease, border-radius 0.15s ease;
 }
 
@@ -1603,195 +1605,6 @@ pre {
   background: var(--bg-base);
 }
 
-/* ==================== Hero Spotlight Effect ==================== */
-/* Advanced multi-layer spotlight: Chromatic Aberration + Mesh Gradient + SVG Filter + Specular Rim */
-.hero-spotlight {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  opacity: 0;
-  transition: opacity 0.6s ease;
-  overflow: hidden;
-}
-
-.hero:hover .hero-spotlight {
-  opacity: 1;
-}
-
-/* SVG Filter 定义 - 液态玻璃有机扰动 */
-.hero-spotlight svg.spotlight-filters {
-  position: absolute;
-  width: 0;
-  height: 0;
-  overflow: hidden;
-}
-
-/* Layer 1: 主光晕 - Mesh 渐变（蓝紫粉三色融合） */
-.hero-spotlight::before {
-  content: '';
-  position: absolute;
-  width: 800px;
-  height: 800px;
-  border-radius: 50%;
-  background:
-    radial-gradient(ellipse 600px 500px at 40% 35%,
-      rgba(0, 122, 255, 0.12) 0%,
-      rgba(88, 86, 214, 0.06) 40%,
-      transparent 70%),
-    radial-gradient(ellipse 400px 600px at 65% 60%,
-      rgba(175, 82, 222, 0.08) 0%,
-      rgba(0, 122, 255, 0.04) 45%,
-      transparent 70%),
-    radial-gradient(ellipse 500px 400px at 50% 50%,
-      rgba(255, 55, 95, 0.04) 0%,
-      transparent 50%);
-  transform: translate(-50%, -50%);
-  left: var(--spotlight-x, 50%);
-  top: var(--spotlight-y, 50%);
-  filter: url(#spotlight-organic);
-  will-change: transform;
-  animation: spotlight-breathe 4s ease-in-out infinite;
-}
-
-/* Layer 2: 色差分离 - 红色通道（动态偏移） */
-.hero-spotlight::after {
-  content: '';
-  position: absolute;
-  width: 700px;
-  height: 700px;
-  border-radius: 50%;
-  background: radial-gradient(circle,
-    rgba(255, 60, 80, 0.06) 0%,
-    rgba(255, 60, 80, 0.02) 35%,
-    transparent 65%);
-  transform: translate(-50%, -50%);
-  left: calc(var(--spotlight-x, 50%) + var(--chromatic-offset, 8px));
-  top: calc(var(--spotlight-y, 50%) - var(--chromatic-offset, 8px) * 0.5);
-  will-change: transform;
-  mix-blend-mode: screen;
-}
-
-/* Layer 2.5: 色差分离 - 绿色通道（偏移 +4px, -8px） */
-.spotlight-chromatic-green {
-  position: absolute;
-  width: 700px;
-  height: 700px;
-  border-radius: 50%;
-  background: radial-gradient(circle,
-    rgba(80, 200, 120, 0.05) 0%,
-    rgba(80, 200, 120, 0.02) 35%,
-    transparent 65%);
-  transform: translate(-50%, -50%);
-  left: calc(var(--spotlight-x, 50%) + 4px);
-  top: calc(var(--spotlight-y, 50%) - 8px);
-  will-change: transform;
-  mix-blend-mode: screen;
-  pointer-events: none;
-}
-
-/* Layer 3: 色差分离 - 蓝色通道（偏移 -8px, +4px） */
-.spotlight-chromatic-blue {
-  position: absolute;
-  width: 700px;
-  height: 700px;
-  border-radius: 50%;
-  background: radial-gradient(circle,
-    rgba(50, 130, 255, 0.06) 0%,
-    rgba(50, 130, 255, 0.02) 35%,
-    transparent 65%);
-  transform: translate(-50%, -50%);
-  left: calc(var(--spotlight-x, 50%) - 8px);
-  top: calc(var(--spotlight-y, 50%) + 4px);
-  will-change: transform;
-  mix-blend-mode: screen;
-  pointer-events: none;
-}
-
-/* Layer 4: 高光核心 - 极亮中心点 */
-.spotlight-core {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: radial-gradient(circle,
-    rgba(255, 255, 255, 0.08) 0%,
-    rgba(0, 122, 255, 0.04) 30%,
-    transparent 70%);
-  transform: translate(-50%, -50%);
-  left: var(--spotlight-x, 50%);
-  top: var(--spotlight-y, 50%);
-  will-change: transform;
-  pointer-events: none;
-}
-
-/* Layer 5: Apple 风格高光边缘 - 基于角度的边缘光 */
-.spotlight-rim {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  pointer-events: none;
-  background: radial-gradient(
-    800px circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-    transparent 40%,
-    rgba(255, 255, 255, 0.015) 60%,
-    rgba(255, 255, 255, 0.03) 75%,
-    rgba(255, 255, 255, 0.01) 85%,
-    transparent 95%
-  );
-  mask-image: radial-gradient(
-    800px circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-    transparent 30%,
-    black 50%,
-    black 80%,
-    transparent 100%
-  );
-  -webkit-mask-image: radial-gradient(
-    800px circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-    transparent 30%,
-    black 50%,
-    black 80%,
-    transparent 100%
-  );
-}
-
-.hero:hover .spotlight-rim {
-  opacity: 1;
-}
-
-/* Layer 6: 漂浮微粒 - 光点粒子 */
-.spotlight-particles {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
-.spotlight-particle {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  opacity: 0;
-  will-change: transform, opacity;
-}
-
-/* 追光呼吸动画 */
-@keyframes spotlight-breathe {
-  0%, 100% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.05); }
-}
-
-/* 粒子漂浮动画 */
-@keyframes particle-float {
-  0% { transform: translateY(0) translateX(0); opacity: 0; }
-  20% { opacity: 0.6; }
-  80% { opacity: 0.3; }
-  100% { transform: translateY(-80px) translateX(20px); opacity: 0; }
-}
-
 /* I6创新：双击旋转动画 */
 @keyframes letterSpin {
   0% { transform: rotate(0deg) scale(1); }
@@ -1825,63 +1638,147 @@ pre {
   100% { transform: translateY(-70px) translateX(0) rotate(540deg) scale(0); opacity: 0; }
 }
 
+/* ==================== Hero Spotlight Effect ==================== */
+/* 方案 A: Apple 纯净追光 — 单层柔和径向渐变 */
+.hero-spotlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  overflow: hidden;
+}
+
+.hero:hover .hero-spotlight {
+  opacity: 1;
+}
+
+.hero-spotlight::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle,
+    rgba(0, 122, 255, 0.10) 0%,
+    rgba(88, 86, 214, 0.05) 35%,
+    transparent 65%);
+  transform: translate(-50%, -50%);
+  left: var(--spotlight-x, 50%);
+  top: var(--spotlight-y, 50%);
+  will-change: transform;
+}
+
+/* 方案 B: Vercel 极简光晕 — 极淡单色渐变 */
+.hero-spotlight.vercel::before {
+  width: 1000px;
+  height: 1000px;
+  background: radial-gradient(circle,
+    rgba(255, 255, 255, 0.04) 0%,
+    transparent 55%);
+}
+
+/* 方案 C: Linear 边框流光 */
+.hero-stats.border-beam {
+  position: relative;
+}
+
+.hero-stats.border-beam::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(var(--radius-xl) + 2px);
+  background: conic-gradient(from 0deg, transparent 0%, var(--accent-primary) 15%, transparent 30%);
+  animation: border-beam-rotate 2s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.hero-stats.border-beam:hover::before {
+  opacity: 1;
+}
+
+@keyframes border-beam-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 方案 D: Stripe 卡片内发光 */
+.hero-stats.stripe-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    300px circle at var(--tilt-x, 50%) var(--tilt-y, 50%),
+    rgba(0, 122, 255, 0.12) 0%,
+    transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.hero-stats.stripe-glow:hover::before {
+  opacity: 1;
+}
+
+/* 方案 E: Magic UI 光束连接 */
+.hero-beam {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.hero:hover .hero-beam {
+  opacity: 0.15;
+}
+
+.hero-beam svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.hero-beam path {
+  stroke: var(--accent-primary);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-dasharray: 8 4;
+  animation: beam-dash 1s linear infinite;
+}
+
+@keyframes beam-dash {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -12; }
+}
+
 /* Light theme 适配 */
 [data-theme="light"] .hero-spotlight::before {
-  background:
-    radial-gradient(ellipse 600px 500px at 40% 35%,
-      rgba(0, 100, 220, 0.08) 0%,
-      rgba(88, 86, 214, 0.04) 40%,
-      transparent 70%),
-    radial-gradient(ellipse 400px 600px at 65% 60%,
-      rgba(175, 82, 222, 0.05) 0%,
-      rgba(0, 100, 220, 0.03) 45%,
-      transparent 70%),
-    radial-gradient(ellipse 500px 400px at 50% 50%,
-      rgba(255, 55, 95, 0.03) 0%,
-      transparent 50%);
-}
-
-[data-theme="light"] .hero-spotlight::after {
   background: radial-gradient(circle,
-    rgba(255, 60, 80, 0.04) 0%,
-    rgba(255, 60, 80, 0.01) 35%,
+    rgba(0, 100, 220, 0.06) 0%,
+    rgba(88, 86, 214, 0.03) 35%,
     transparent 65%);
 }
 
-[data-theme="light"] .spotlight-chromatic-green {
+[data-theme="light"] .hero-spotlight.vercel::before {
   background: radial-gradient(circle,
-    rgba(60, 180, 100, 0.035) 0%,
-    rgba(60, 180, 100, 0.01) 35%,
-    transparent 65%);
+    rgba(0, 0, 0, 0.03) 0%,
+    transparent 55%);
 }
 
-[data-theme="light"] .spotlight-chromatic-blue {
-  background: radial-gradient(circle,
-    rgba(50, 130, 255, 0.04) 0%,
-    rgba(50, 130, 255, 0.01) 35%,
-    transparent 65%);
-}
-
-[data-theme="light"] .spotlight-core {
-  background: radial-gradient(circle,
-    rgba(0, 0, 0, 0.04) 0%,
-    rgba(0, 100, 220, 0.02) 30%,
-    transparent 70%);
-}
-
-[data-theme="light"] .spotlight-rim {
+[data-theme="light"] .hero-stats.stripe-glow::before {
   background: radial-gradient(
-    800px circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-    transparent 40%,
-    rgba(0, 0, 0, 0.01) 60%,
-    rgba(0, 0, 0, 0.02) 75%,
-    rgba(0, 0, 0, 0.008) 85%,
-    transparent 95%
-  );
+    300px circle at var(--tilt-x, 50%) var(--tilt-y, 50%),
+    rgba(0, 100, 220, 0.08) 0%,
+    transparent 60%);
 }
 
-[data-theme="light"] .spotlight-particle {
-  background: rgba(0, 0, 0, 0.15);
+[data-theme="light"] .hero-beam path {
+  stroke: var(--accent-primary);
 }
 
 /* ==================== Hero Title Hover ==================== */
@@ -1979,6 +1876,15 @@ pre {
 
 .hero:hover .hero-stats::before {
   opacity: 1;
+}
+
+/* 避免与 stripe-glow 的 ::before 冲突 */
+.hero-stats.stripe-glow::before {
+  background: radial-gradient(
+    300px circle at var(--tilt-x, 50%) var(--tilt-y, 50%),
+    rgba(0, 122, 255, 0.12) 0%,
+    transparent 60%
+  );
 }
 
 .hero-stats:hover {
@@ -2284,6 +2190,11 @@ pre {
 
 .model-card:active {
   transform: translateY(-2px) scale(0.99);
+}
+
+.model-card:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
 }
 
 /* REMOVE the old card-visual completely */
@@ -3285,6 +3196,11 @@ pre {
   border-color: rgba(255, 69, 58, 0.3);
 }
 
+.fav-btn:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
 /* ==================== 17. Compare View & Compare Bar ==================== */
 .compare-mode {
   cursor: pointer;
@@ -3843,6 +3759,48 @@ pre {
 .viz-svg-container svg {
   display: block;
   margin: 0 auto;
+}
+
+/* Model Viz SVG Optimizations */
+.model-viz-svg {
+  content-visibility: auto;
+  contain: paint layout;
+}
+
+.viz-empty {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 24px;
+  font-size: 0.9375rem;
+}
+
+/* SVG Block Styles */
+.viz-block {
+  cursor: pointer;
+  transition: transform 0.25s var(--spring), filter 0.25s var(--ease-out);
+  transform-origin: center;
+}
+
+.viz-block.selected rect {
+  stroke: #fff;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 6px rgba(0, 122, 255, 0.5));
+}
+
+.viz-block.viz-clicked {
+  animation: vizBlockClick 0.35s var(--spring) forwards;
+}
+
+@keyframes vizBlockClick {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* SVG Neural Network Styles */
@@ -4636,6 +4594,109 @@ pre {
   background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ==================== App Skeleton (首屏骨架屏) ==================== */
+.app-skeleton {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-base);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--header-height);
+}
+
+.skeleton-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--container-padding);
+  z-index: 100;
+}
+
+.skeleton-logo {
+  width: 180px;
+  height: 24px;
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-nav {
+  display: flex;
+  gap: 24px;
+}
+
+.skeleton-nav-item {
+  width: 60px;
+  height: 16px;
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-hero {
+  max-width: 900px;
+  margin: 60px auto 40px;
+  padding: 0 var(--container-padding);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.skeleton-hero-title {
+  width: 70%;
+  height: 48px;
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-hero-subtitle {
+  width: 50%;
+  height: 20px;
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-hero-stats {
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.skeleton-stat {
+  width: 120px;
+  height: 80px;
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-lg);
+}
+
+.skeleton-grid {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-padding);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 .lazy-image.loaded {
@@ -5686,6 +5747,60 @@ pre {
   }
 }
 
+/* ==================== 25.5 Mobile Responsive (375px-768px) ==================== */
+@media (max-width: 768px) and (min-width: 375px) {
+  :root {
+    --letter-D-w: 52px; --letter-D-h: 84px;
+    --letter-e-w: 40px; --letter-e-h: 60px;
+    --letter-e2-w: 38px; --letter-e2-h: 56px;
+    --letter-p-w: 38px; --letter-p-h: 64px;
+    --letter-L-w: 42px; --letter-L-h: 72px;
+    --letter-e3-w: 38px; --letter-e3-h: 56px;
+    --letter-a-w: 38px; --letter-a-h: 56px;
+    --letter-r-w: 34px; --letter-r-h: 60px;
+    --letter-n-w: 38px; --letter-n-h: 60px;
+    --letter-i-w: 26px; --letter-i-h: 68px;
+    --letter-n2-w: 38px; --letter-n2-h: 60px;
+    --letter-g-w: 36px; --letter-g-h: 62px;
+  }
+
+  .model-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .search-box {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .search-box input {
+    padding: 12px 16px 12px 44px;
+    font-size: 0.9375rem;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .mobile-nav {
+    display: flex;
+  }
+
+  .header-inner {
+    gap: 8px;
+  }
+
+  .nav-btn {
+    padding: 10px 12px;
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .nav-btn span {
+    display: none;
+  }
+}
+
 /* ==================== 26. Reduced Motion Support ==================== */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -5695,6 +5810,13 @@ pre {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  body,
+  .app,
+  .container,
+  .section {
+    transition: none !important;
   }
 
   /* 字母小人动画禁用 */
@@ -5759,32 +5881,49 @@ pre {
 
 /* ==================== 27. Print Styles ==================== */
 @media print {
+  /* 隐藏导航和装饰 */
   .header,
-  .hero-actions,
-  .btn,
-  .toast,
   .nav,
-  .fav-btn,
+  .theme-toggle-btn,
+  .interaction-guide-btn,
+  .letter-stage,
+  .hero-spotlight,
+  .hero-beam,
+  .toast,
+  .modal-overlay,
   .compare-bar,
-  .theme-toggle-btn {
+  .skeleton-screen,
+  .app-skeleton {
     display: none !important;
   }
 
+  /* 调整布局 */
   body {
     background: white !important;
     color: black !important;
   }
 
-  .site-header,
-  .hero,
-  .section {
-    padding: 24px 0;
+  .model-card {
+    break-inside: avoid;
+    border: 1px solid #ccc;
+    box-shadow: none;
   }
 
-  .module-card,
-  .model-card {
-    background: white !important;
-    border: 1px solid #ddd !important;
+  .model-card-header {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* 确保链接可点击 */
+  a[href]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  /* 页面分页 */
+  .model-detail-header,
+  .category-card {
     break-inside: avoid;
   }
 }
@@ -5823,6 +5962,51 @@ pre {
 ::-moz-selection {
   background: rgba(0, 122, 255, 0.3);
   color: var(--text-primary);
+}
+
+/* ==================== 29. Touch & Mobile Optimizations ==================== */
+/* 禁用触摸高亮 */
+button,
+a,
+.btn,
+.nav-btn,
+.filter-btn,
+.model-card,
+.module-card,
+.path-card,
+.fav-btn,
+.compare-checkbox,
+.viz-block,
+.viz-block-card {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* 增大按钮点击区域 */
+.btn,
+.nav-btn,
+.filter-btn,
+.fav-btn,
+.model-card-btn,
+.theme-toggle-btn,
+.user-avatar-btn {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* 交互元素禁用文本选择 */
+.btn,
+.nav-btn,
+.filter-btn,
+.fav-btn,
+.model-card-btn,
+.theme-toggle-btn,
+.user-avatar-btn,
+.viz-block,
+.viz-block-card,
+.compare-checkbox {
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* ==================== Focus Visible ==================== */
@@ -5993,6 +6177,72 @@ select:focus:not(:focus-visible) {
   margin-top: 16px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
+}
+
+/* ===== Spotlight 方案选择 ===== */
+.spotlight-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 480px) {
+  .spotlight-options {
+    grid-template-columns: 1fr;
+  }
+}
+
+.spotlight-option {
+  display: flex;
+  align-items: stretch;
+  cursor: pointer;
+}
+
+.spotlight-option input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.spotlight-option-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--bg-elevated);
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.spotlight-option:hover .spotlight-option-card {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-1px);
+}
+
+.spotlight-option input[type="radio"]:checked + .spotlight-option-card {
+  border-color: var(--accent-primary);
+  background: var(--accent-light);
+  box-shadow: 0 0 0 1px var(--accent-primary);
+}
+
+.spotlight-option-card strong {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.spotlight-option-card span {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.spotlight-option-card small {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.3;
 }
 
 /* ===== iOS 风格开关 ===== */
