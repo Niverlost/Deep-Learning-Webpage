@@ -264,10 +264,6 @@ export function initAdminPassword() {
         safeSetItem('admin_salt', salt);
         // 仅在开发环境显示默认密码（生产环境应移除此日志）
         if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-          // DEBUG: console.log('%c🔐 管理员账户已初始化', 'color: #007AFF; font-size: 14px; font-weight: bold;');
-          // DEBUG: console.log('%c用户名: admin', 'color: #333; font-size: 12px;');
-          // DEBUG: console.log('%c密码: ' + defaultPassword, 'color: #333; font-size: 12px;');
-          // DEBUG: console.log('%c请登录后立即修改密码！', 'color: #FF3B30; font-size: 12px;');
         }
       }).catch(e => {
         console.warn('[Admin] 密码哈希生成失败:', e);

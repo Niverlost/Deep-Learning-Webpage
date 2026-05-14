@@ -91,7 +91,6 @@ function loadCachedModels(forceRefresh) {
       try {
         const data = JSON.parse(savedData);
         if (validateModelData(data)) {
-          // DEBUG: console.log('[Data] 从 localStorage 缓存加载了', data.length, '个模型');
           return data;
         }
       } catch (e) {
@@ -119,7 +118,6 @@ function cacheModelData(data) {
   try {
     localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data));
     localStorage.setItem(CONFIG.STORAGE_KEY + '_ts', String(Date.now()));
-    // DEBUG: console.log('[Data] 数据已缓存到 localStorage');
   } catch (e) {
     console.warn('localStorage 保存失败（可能存储已满）:', e);
   }
@@ -130,7 +128,6 @@ function cacheModelData(data) {
  * @returns {Promise<Array>} 模型数据数组
  */
 async function fetchModelData() {
-  // DEBUG: console.log('[Data] 正在加载 models.json...');
   const resp = await fetch('assets/models.json?t=' + Date.now());
   if (!resp.ok) {
     throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
@@ -144,20 +141,7 @@ async function fetchModelData() {
   if (!validateModelData(data)) {
     throw new Error('models.json 数据格式不正确或为空');
   }
-  // DEBUG: console.log('[Data] 从 models.json 加载了', data.length, '个模型');
   return data;
-}
-
-/**
- * 处理 file:// 协议错误
- */
-function handleFileProtocolError() {
-  console.error('[Data] 检测到 file:// 协议！请使用本地服务器运行本应用');
-  console.error('[Data] 解决方案：');
-  console.error('[Data] 1. 使用 npx serve（需要 Node.js）');
-  console.error('[Data] 2. 使用 python -m http.server（需要 Python）');
-  console.error('[Data] 3. 使用 VS Code Live Server 扩展');
-  showError('检测到 file:// 协议！请使用本地服务器运行本应用');
 }
 
 /**
@@ -178,14 +162,8 @@ export async function loadModels(retryCount = 0) {
   } catch (e) {
     console.error('[Data] 无法加载 models.json:', e);
 
-    if (location.protocol === 'file:') {
-      handleFileProtocolError();
-      return [];
-    }
-
     if (retryCount < 3) {
       const delay = Math.pow(2, retryCount) * 1000;
-      // DEBUG: console.log(`[Data] ${delay}ms 后进行第 ${retryCount + 1} 次重试...`);
       showError(`模型数据加载失败，${delay / 1000}秒后自动重试 (${retryCount + 1}/3)...`);
       await new Promise(resolve => setTimeout(resolve, delay));
       return loadModels(retryCount + 1);

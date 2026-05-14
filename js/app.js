@@ -8,8 +8,7 @@ import {
   LEARNING_PATHS, safeSetItem, prefersReducedMotion, escapeHtml, debounce,
   hexToBuffer, bufferToHex, generateSalt, hashPassword,
   getCategoryGradient, highlightText, easeOutExpo, animateCount,
-  addTermTooltips, initTermTooltips, getBlockIcon, escapeCodeHtml, highlightSyntax,
-  ErrorCollector, PerformanceMonitor
+  addTermTooltips, initTermTooltips, getBlockIcon, escapeCodeHtml, highlightSyntax
 } from './utils.js';
 
 import {
@@ -108,7 +107,12 @@ window.DeepLearningExplorer = {
 
   // Letter System
   LetterCharacter, LetterSystem, initLetterSystem, createLetterCharacter,
-  destroyLetterSystem
+  destroyLetterSystem,
+
+  // View Renderers
+  renderHomeView, renderCategoryView, renderModelDetailView,
+  renderFavoritesView, renderAdminView, renderCompareView,
+  renderLearningPathView
 };
 
 // ============================================================
@@ -116,8 +120,6 @@ window.DeepLearningExplorer = {
 // ============================================================
 
 async function initApp() {
-  // DEBUG: console.log('[App] Deep Learning Explorer 初始化中...');
-
   // 1. 恢复主题
   restoreTheme();
 
@@ -130,7 +132,6 @@ async function initApp() {
   // 4. 加载模型数据
   try {
     state.models = await loadModels();
-    // DEBUG: console.log('[App] 已加载', state.models.length, '个模型');
   } catch (e) {
     console.error('[App] 模型数据加载失败:', e);
     showToast('模型数据加载失败，请刷新页面重试', 'error');
@@ -177,13 +178,7 @@ async function initApp() {
     appEl.style.opacity = '1';
   }
 
-  // 11. 初始化性能监控
-  const perfMonitor = new PerformanceMonitor();
-  setTimeout(() => {
-    // DEBUG: console.log('[Performance]', perfMonitor.report());
-  }, 5000);
-
-  // DEBUG: console.log('[App] 初始化完成');
+  // 初始化完成
 }
 
 // ============================================================
@@ -395,14 +390,13 @@ window.addEventListener('beforeunload', () => {
 
 // ==================== 全局错误监听 ====================
 
-const errorCollector = new ErrorCollector();
 window.onerror = function(msg, url, line, col, error) {
-  errorCollector.collect(error || new Error(msg), { url, line, col });
+  console.error('[Global Error]', msg, 'at', url + ':' + line);
+  return false;
 };
 window.onunhandledrejection = function(event) {
-  errorCollector.collect(event.reason || new Error('Unhandled Promise Rejection'));
+  console.error('[Unhandled Rejection]', event.reason);
 };
-window.exportErrors = () => errorCollector.export();
 
 // 导出全局访问（向后兼容）
 window.navigate = navigate;
@@ -425,6 +419,10 @@ window.logoutUser = logoutUser;
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
+  // 初始化应用
+  initApp();
+
+  // 反馈表单处理
   const feedbackForm = document.getElementById('feedbackForm');
   if (feedbackForm) {
     feedbackForm.addEventListener('submit', function(e) {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Deep Learning Explorer - 交互式深度学习模型可视化与学习平台，涵盖CNN、Transformer、扩散模型等经典架构">
+  <meta name="description" content="Deep-Learning-Webpage - An experimental front-end project for deep learning development.">
   <meta name="theme-color" content="#000000">
 
   <!-- 防止 FOUC：在 CSS 加载前优先应用主题 -->
@@ -25,7 +25,10 @@
   <!-- 注意：当前使用内联事件处理器和样式，需要 'unsafe-inline' 支持 -->
   <!-- 生产环境建议：将内联事件迁移到 addEventListener，内联样式迁移到 CSS 文件，然后移除 'unsafe-inline' -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; object-src 'none';">
-  <title>Deep Learning Explorer - 深度学习模型可视化平台</title>
+  <title>Deep-Learning-Webpage</title>
+
+  <!-- GitHub Pages 路径基准 -->
+  <base href="/Deep-Learning-Webpage/">
 
   <!-- System font for Apple style (SF Pro on Apple devices, system fonts elsewhere) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -89,7 +92,7 @@
             </defs>
           </svg>
         </span>
-        <span class="logo-text">Deep Learning Explorer</span>
+        <span class="logo-text">Deep-Learning-Webpage</span>
       </a>
       <nav class="nav" role="navigation" aria-label="主导航">
         <button class="nav-btn active" data-view="home" onclick="event.preventDefault(); navigate('home')">
@@ -148,7 +151,7 @@
       <!-- Hero 区域 -->
       <div class="hero">
         <div class="hero-content">
-          <h1 class="hero-title" style="text-align:center;font-size:clamp(1.5rem,4vw,2.5rem);font-weight:700;color:var(--text-primary);margin-bottom:8px;">Deep Learning Explorer</h1>
+          <h1 class="hero-title" style="text-align:center;font-size:clamp(1.5rem,4vw,2.5rem);font-weight:700;color:var(--text-primary);margin-bottom:8px;">Deep-Learning-Webpage</h1>
           <p class="hero-subtitle" style="text-align:center;font-size:clamp(0.875rem,2vw,1.125rem);color:var(--text-secondary);margin-bottom:24px;">交互式探索 35+ 经典深度学习模型的架构与原理</p>
           <!-- 字母小人舞台 -->
           <div class="letter-stage" id="letterStage">
@@ -368,7 +371,7 @@
           <circle cx="20" cy="12" r="6"/>
         </svg>
       </div>
-      <h2 class="login-title">欢迎来到 Deep Learning Explorer</h2>
+      <h2 class="login-title">欢迎来到 Deep-Learning-Webpage</h2>
       <p class="login-hint">登录以解锁收藏、对比等更多功能</p>
 
       <!-- 标签切换 -->
@@ -855,17 +858,6 @@
     </div>
   </div>
 
-  <!-- ==================== 紧急调试工具 ==================== -->
-  <script>
-    // 紧急调试：如果 URL 包含 ?clear=true，清除所有缓存
-    if (new URLSearchParams(location.search).get('clear') === 'true') {
-      localStorage.clear();
-      console.log('[Emergency] 已清除所有 localStorage 缓存');
-      alert('缓存已清除，页面将刷新');
-      location.href = location.pathname;
-    }
-  </script>
-
   <!-- ==================== 反馈按钮 ==================== -->
   <button class="feedback-btn" id="feedbackBtn" onclick="openModal('feedbackModal')" aria-label="提交反馈">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -896,7 +888,7 @@
   </div>
 
   <!-- ==================== 脚本 ==================== -->
-  <script type="module" src="js/viz-configs.js"></script>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="./js/viz-configs.js"></script>
+  <script type="module" src="./js/app.js"></script>
 </body>
 </html>

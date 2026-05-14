@@ -1,30 +1,30 @@
-# Deep Learning Explorer
+# Deep-Learning-Webpage
 
 <p align="center">
-  <strong>交互式深度学习模型可视化与学习平台</strong>
+  <strong>An experimental front-end project for deep learning development.</strong>
 </p>
 
 <p align="center">
-  <a href="https://gitee.com/never-lost/deep-learning-explorer" target="_blank">
+  <a href="https://github.com/Niverlost/Deep-Learning-Webpage" target="_blank">
     <img src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5">
   </a>
-  <a href="https://gitee.com/never-lost/deep-learning-explorer" target="_blank">
+  <a href="https://github.com/Niverlost/Deep-Learning-Webpage" target="_blank">
     <img src="https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3">
   </a>
-  <a href="https://gitee.com/never-lost/deep-learning-explorer" target="_blank">
+  <a href="https://github.com/Niverlost/Deep-Learning-Webpage" target="_blank">
     <img src="https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black" alt="JavaScript">
   </a>
-  <a href="https://gitee.com/never-lost/deep-learning-explorer/pages" target="_blank">
-    <img src="https://img.shields.io/badge/Gitee%20Pages-2D8CF0?style=flat-square&logo=gitee&logoColor=white" alt="Gitee Pages">
+  <a href="https://niverlost.github.io/Deep-Learning-Webpage" target="_blank">
+    <img src="https://img.shields.io/badge/GitHub%20Pages-222222?style=flat-square&logo=github&logoColor=white" alt="GitHub Pages">
   </a>
-  <a href="https://github.com/never-lost/deep-learning-explorer/blob/main/LICENSE" target="_blank">
-    <img src="https://img.shields.io/badge/License-GPL--3.0-green?style=flat-square&logo=gnu&logoColor=white" alt="GPL-3.0">
+  <a href="https://github.com/Niverlost/Deep-Learning-Webpage/blob/main/LICENSE" target="_blank">
+    <img src="https://img.shields.io/badge/License-Apache%202.0-blue?style=flat-square&logo=apache&logoColor=white" alt="Apache 2.0">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://never-lost.gitee.io/deep-learning-explorer" target="_blank">
-    <img src="https://img.shields.io/badge/在线演示-点击访问-007AFF?style=for-the-badge&logo=safari&logoColor=white" alt="在线演示">
+  <a href="https://niverlost.github.io/Deep-Learning-Webpage" target="_blank">
+    <img src="https://img.shields.io/badge/在线访问-点击打开-007AFF?style=for-the-badge&logo=safari&logoColor=white" alt="在线访问">
   </a>
 </p>
 
@@ -34,7 +34,7 @@
 
 ---
 
-## 功能特性
+## 网页前端功能
 
 | 功能 | 描述 | 状态 |
 |------|------|------|
@@ -49,115 +49,20 @@
 | 响应式设计 | 完美适配桌面、平板、手机等各种屏幕尺寸 | ✅ |
 | 字母小人 | 趣味交互系统：悬停、点击、靠近、按住等多种互动反馈 | ✅ |
 
-<!--
-### 功能截图
-
-> 以下为截图占位区域，请替换为实际截图
-
-| 首页浏览 | 模型详情 | 架构可视化 |
-|----------|----------|------------|
-| ![首页](docs/screenshots/home.png) | ![详情](docs/screenshots/detail.png) | ![可视化](docs/screenshots/viz.png) |
-
-| 收藏对比 | 学习路径 | 管理后台 |
-|----------|----------|----------|
-| ![对比](docs/screenshots/compare.png) | ![路径](docs/screenshots/path.png) | ![管理](docs/screenshots/admin.png) |
--->
-
 ---
 
-## 项目数据
+## 在线访问
 
-<div align="center">
+直接访问 GitHub Pages 部署地址：
 
-| 统计项 | 数值 |
-|--------|------|
-| 经典模型 | **35+** |
-| 功能模块 | **8+** |
-| 前端纯度 | **100%** 纯前端实现 |
-| 框架依赖 | **0** 零框架依赖 |
-| 响应式支持 | **全平台** 桌面/平板/手机 |
-
-</div>
-
----
-
-## 技术架构
-
-### 模块化 ES6+ 架构
-
-```
-js/
-├── app.js           # 应用主入口，视图渲染与事件绑定
-├── auth.js          # 用户认证（登录/注册/会话管理）
-├── letter-system.js # 字母小人交互系统（FSM 状态机）
-├── router.js        # 前端路由管理（Hash 路由）
-├── state.js         # 全局状态管理（收藏/对比/主题/用户）
-├── ui-components.js # UI 组件工厂（模态框/Toast/骨架屏）
-├── utils.js         # 工具函数（防抖/节流/XSS 过滤/格式化）
-├── viz-configs.js   # 可视化配置数据
-└── viz-engine.js    # 架构可视化渲染引擎
-```
-
-### 核心技术特点
-
-- **纯原生实现**：无 React/Vue/Angular 等框架依赖，浏览器原生运行
-- **ES6+ Modules**：模块化代码组织，按需加载
-- **零构建依赖**：可直接在浏览器中打开运行，也可使用 Vite 构建
-- **本地持久化**：localStorage 存储用户数据、收藏、主题偏好
-- **性能优化**：骨架屏加载、防抖搜索、缓存策略、内存泄漏防护
-- **安全加固**：XSS 输入过滤、CSP 内容安全策略
-
----
-
-## 快速开始
-
-### 在线访问
-
-直接访问 Gitee Pages 部署地址：
-
-👉 **[https://never-lost.gitee.io/deep-learning-explorer](https://never-lost.gitee.io/deep-learning-explorer)**
-
-### 本地运行
-
-#### 方式一：Python 简易服务器
-
-```bash
-# 进入项目目录
-cd "deep learning"
-
-# Python 3
-python -m http.server 8000
-
-# Python 2
-python -m SimpleHTTPServer 8000
-```
-
-然后打开浏览器访问 `http://localhost:8000`
-
-#### 方式二：VS Code Live Server
-
-1. 安装 VS Code 扩展 **Live Server**
-2. 右键点击 `index.html` → **Open with Live Server**
-
-#### 方式三：Vite 构建（可选）
-
-```bash
-# 安装依赖
-npm install
-
-# 开发服务器
-npm run dev
-
-# 生产构建
-npm run build
-```
+👉 **[https://niverlost.github.io/Deep-Learning-Webpage](https://niverlost.github.io/Deep-Learning-Webpage)**
 
 ---
 
 ## 项目结构
 
 ```
-deep-learning/
+Deep-Learning-Webpage/
 ├── assets/
 │   └── models.json          # 35+ 深度学习模型数据
 ├── css/
@@ -193,47 +98,6 @@ deep-learning/
 
 ---
 
-## 模型数据
-
-当前收录 **35 个经典深度学习模型**，涵盖以下领域：
-
-| 领域 | 模型数量 | 代表模型 |
-|------|----------|----------|
-| 图像分类 | 10 | LeNet-5, AlexNet, VGGNet, ResNet, ViT, ConvNeXt... |
-| 目标检测 | 7 | YOLO(v1/v3/v5/v8), Faster R-CNN, SSD, RetinaNet... |
-| 语义分割 | 3 | FCN, U-Net, DeepLab v3+ |
-| 自然语言处理 | 6 | Transformer, BERT, GPT-2/4, T5, LSTM, GRU |
-| 图像生成 | 1 | Stable Diffusion |
-| 多模态 | 1 | CLIP |
-| 基础算法 | 1 | BP (反向传播) |
-
-> 模型数据以 JSON 格式存储于 [`assets/models.json`](assets/models.json)，包含名称、年份、作者、机构、架构、参数量、性能指标、论文链接等完整信息。
-
----
-
-## 交互特色
-
-### 字母小人系统
-
-首页 Hero 区域的 "Deep Learning" 字母小人拥有丰富的交互行为：
-
-- **鼠标交互**：悬停弹跳、点击注视、靠近好奇、按住压扁、快速移动贪吃蛇跟随
-- **偷懒动作**：打瞌睡、打哈欠、伸懒腰、走神发呆、偷看别处、揉眼睛
-- **社交互动**：相邻字母窃窃私语、传递眼神、庆祝跳跃
-- **独特性格**：每个字母拥有独立的性格标签与配色
-
-### 5 种 Hero 聚光灯效果
-
-| 方案 | 风格 | 描述 |
-|------|------|------|
-| A | Apple 纯净追光 | 柔和蓝紫渐变跟随鼠标 |
-| B | Vercel 极简光晕 | 极淡光晕，几乎不可见 |
-| C | Linear 边框流光 | 卡片边缘旋转渐变边框 |
-| D | Stripe 卡片内发光 | 鼠标位置产生内部光斑 |
-| E | Magic UI 光束连接 | 动态虚线光束连接元素 |
-
----
-
 ## 贡献与反馈
 
 欢迎提交 Issue 和 Pull Request！
@@ -245,22 +109,28 @@ deep-learning/
 ### 反馈渠道
 
 - 项目内反馈：点击右下角「反馈」按钮提交
-- Gitee Issues：[提交 Issue](https://gitee.com/never-lost/deep-learning-explorer/issues)
+- GitHub Issues：[提交 Issue](https://github.com/Niverlost/Deep-Learning-Webpage/issues)
 
 ---
 
 ## 开源协议
 
-本项目采用 [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.html) 开源协议。
+本项目采用 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) 开源协议。
 
 ```
-Deep Learning Explorer
-Copyright (C) 2025
+Copyright 2025 Deep-Learning-Webpage
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 ```
 
 ---
