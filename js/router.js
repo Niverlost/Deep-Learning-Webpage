@@ -20,7 +20,7 @@ let isNavigating = false;
  */
 function sanitizeRouteParam(param) {
   if (typeof param !== 'string') return '';
-  return param.replace(/[^a-zA-Z0-9\-]/g, '');
+  return param.replace(/[^a-zA-Z0-9一-鿿\-]/g, '');
 }
 
 /**
@@ -48,6 +48,10 @@ function cleanupRouteResources() {
   const vizContainer = document.getElementById('vizContainer') || document.querySelector('.viz-container');
   if (vizContainer) {
     destroyVisualization(vizContainer);
+  }
+  const modelViz = document.getElementById('modelViz');
+  if (modelViz) {
+    destroyVisualization(modelViz);
   }
 }
 

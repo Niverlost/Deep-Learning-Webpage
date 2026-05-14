@@ -729,12 +729,24 @@ export function exportSVGToPNG(svgElement, filename = 'model-viz.png') {
   const ctx = canvas.getContext('2d');
   const img = new Image();
 
+  // 从 viewBox 读取实际像素尺寸
+  const viewBox = svgElement.getAttribute('viewBox');
+  if (viewBox) {
+    const parts = viewBox.split(' ').map(Number);
+    if (parts.length === 4) {
+      canvas.width = parts[2];
+      canvas.height = parts[3];
+    }
+  }
+
   const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(svgBlob);
 
   img.onload = function() {
-    canvas.width = img.width;
-    canvas.height = img.height;
+    if (canvas.width === 0) {
+      canvas.width = img.width || 800;
+      canvas.height = img.height || 600;
+    }
     ctx.drawImage(img, 0, 0);
     URL.revokeObjectURL(url);
 
@@ -743,6 +755,16 @@ export function exportSVGToPNG(svgElement, filename = 'model-viz.png') {
     link.href = canvas.toDataURL('image/png');
     link.click();
   };
+
+  img.onerror = function() {
+    URL.revokeObjectURL(url);
+    console.error('SVG 导出失败：无法将 SVG 渲染为图片');
+  };
+
+  if (canvas.width === 0) {
+    canvas.width = 800;
+    canvas.height = 600;
+  }
 
   img.src = url;
 }

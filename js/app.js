@@ -206,7 +206,16 @@ function renderHomeView() {
   }
 
   if (moduleGrid) {
-    moduleGrid.innerHTML = MODULE_CATEGORIES.map(cat => createCategoryCard(cat)).join('');
+    // 从模型数据中提取分类信息，计算每个分类的模型数量
+    const categoryCounts = {};
+    state.models.forEach(m => {
+      categoryCounts[m.category] = (categoryCounts[m.category] || 0) + 1;
+    });
+    const categories = Object.keys(categoryCounts);
+    moduleGrid.innerHTML = categories.map(cat => {
+      const config = MODULE_CATEGORIES[cat] || {};
+      return createCategoryCard(cat, categoryCounts[cat], config.icon || '');
+    }).join('');
     moduleGrid.querySelectorAll('.category-card').forEach(card => {
       card.addEventListener('click', () => navigate('category', { category: card.dataset.category }));
       card.addEventListener('keydown', (e) => {
@@ -289,7 +298,10 @@ function renderModelDetailView(name) {
   `;
 
   const vizContainer = document.getElementById('modelViz');
-  if (vizContainer) renderModelViz(vizContainer, model);
+  if (vizContainer) {
+    renderModelViz(vizContainer, model);
+    initVizInteractions(vizContainer);
+  }
 
   const paramsContainer = document.getElementById('modelParams');
   if (paramsContainer) renderParamsTable(paramsContainer, model);

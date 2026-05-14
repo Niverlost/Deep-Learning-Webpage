@@ -33,7 +33,7 @@ function showError(message) {
  */
 export const state = {
   models: [],
-  currentView: 'home',
+  currentView: '',
   currentParams: {},
   currentCategory: '',
   isAdmin: false,
@@ -404,8 +404,9 @@ function initMagicBeam(hero) {
   svg.setAttribute('height', '100%');
   svg.style.overflow = 'visible';
 
-  svg.appendChild(createBeamPath('M 50% 35% Q 30% 50% 20% 65%'));
-  svg.appendChild(createBeamPath('M 50% 35% Q 70% 50% 80% 65%'));
+  const rect = hero.getBoundingClientRect();
+  svg.appendChild(createBeamPath(`M ${rect.width * 0.5} ${rect.height * 0.35} Q ${rect.width * 0.3} ${rect.height * 0.5} ${rect.width * 0.2} ${rect.height * 0.65}`));
+  svg.appendChild(createBeamPath(`M ${rect.width * 0.5} ${rect.height * 0.35} Q ${rect.width * 0.7} ${rect.height * 0.5} ${rect.width * 0.8} ${rect.height * 0.65}`));
 
   beam.appendChild(svg);
   hero.insertBefore(beam, hero.firstChild);

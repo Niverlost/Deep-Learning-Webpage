@@ -99,6 +99,9 @@ export function createFocusTrap(modal) {
  * 打开模态框
  * @param {string} id - 模态框 ID
  */
+// 模态框计数器，防止多模态框时提前恢复滚动
+let modalOpenCount = 0;
+
 export function openModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
@@ -107,6 +110,7 @@ export function openModal(id) {
   const previousFocus = document.activeElement;
 
   modal.classList.add('active');
+  modalOpenCount++;
   document.body.style.overflow = 'hidden';
 
   // 创建焦点陷阱
@@ -136,7 +140,10 @@ export function closeModal(id) {
   const modal = document.getElementById(id);
   if (!modal) return;
   modal.classList.remove('active');
-  document.body.style.overflow = '';
+  modalOpenCount = Math.max(0, modalOpenCount - 1);
+  if (modalOpenCount === 0) {
+    document.body.style.overflow = '';
+  }
 
   // 清理焦点陷阱和 ESC 监听
   const store = modalFocusStore.get(modal);
@@ -587,7 +594,7 @@ export function createEmptySearchResult(models = []) {
 export function createEmptyState(message, icon) {
   const defaultIcon = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
   return `<div class="empty-state" aria-live="polite">
-    <div class="empty-state-icon">${icon ? escapeHtml(icon) : defaultIcon}</div>
+    <div class="empty-state-icon">${icon || defaultIcon}</div>
     <p class="empty-state-text">${escapeHtml(message)}</p>
   </div>`;
 }
@@ -841,9 +848,17 @@ function handleCardClick(e, callbacks) {
 export function attachModelCardEvents(container, callbacks = {}) {
   if (!container) return;
 
-  container.addEventListener('click', (e) => handleCardClick(e, callbacks));
+  // 清理上一次添加的监听器和订阅，防止重复累积
+  if (container._clickHandler) {
+    container.removeEventListener('click', container._clickHandler);
+  }
+  if (container._unsubscribeFavorites) {
+    container._unsubscribeFavorites();
+  }
 
-  // 订阅收藏状态变化，同步更新当前容器内所有收藏按钮
+  container._clickHandler = (e) => handleCardClick(e, callbacks);
+  container.addEventListener('click', container._clickHandler);
+
   const unsubscribe = subscribeToFavorites((modelName, isFav) => {
     container.querySelectorAll('.fav-btn').forEach(btn => {
       if (btn.dataset.modelName === modelName) {
@@ -852,7 +867,6 @@ export function attachModelCardEvents(container, callbacks = {}) {
     });
   });
 
-  // 将取消订阅函数挂载到容器上，便于外部清理
   container._unsubscribeFavorites = unsubscribe;
 }
 
