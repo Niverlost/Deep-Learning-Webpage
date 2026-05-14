@@ -166,7 +166,13 @@ async function initApp() {
 
   // 10. 隐藏骨架屏，显示内容
   const skeletonEl = document.getElementById('app-skeleton');
+  const skeletonOverlay = document.getElementById('skeletonOverlay');
   const appEl = document.getElementById('app');
+  if (skeletonOverlay) {
+    skeletonOverlay.style.opacity = '0';
+    skeletonOverlay.style.transition = 'opacity 0.4s ease';
+    setTimeout(() => { skeletonOverlay.style.display = 'none'; }, 400);
+  }
   if (skeletonEl) {
     skeletonEl.style.opacity = '0';
     skeletonEl.style.transition = 'opacity 0.4s ease';
