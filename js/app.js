@@ -358,13 +358,6 @@ function renderLearningPathView() {
   learningPathViewBody.innerHTML = LEARNING_PATHS.map(path => createPathCard(path)).join('');
 }
 
-// DOM 加载完成后初始化
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
-}
-
 // ============================================================
 // 全局事件监听
 // ============================================================
@@ -388,16 +381,6 @@ window.addEventListener('beforeunload', () => {
   destroyLetterSystem();
 });
 
-// ==================== 全局错误监听 ====================
-
-window.onerror = function(msg, url, line, col, error) {
-  console.error('[Global Error]', msg, 'at', url + ':' + line);
-  return false;
-};
-window.onunhandledrejection = function(event) {
-  console.error('[Unhandled Rejection]', event.reason);
-};
-
 // 导出全局访问（向后兼容）
 window.navigate = navigate;
 window.showToast = showToast;
@@ -415,11 +398,10 @@ window.logoutAdmin = logoutAdmin;
 window.logoutUser = logoutUser;
 
 // ============================================================
-// 反馈表单处理
+// 应用启动入口（仅初始化一次）
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', function() {
-  // 初始化应用
+function startApp() {
   initApp();
 
   // 反馈表单处理
@@ -443,4 +425,10 @@ document.addEventListener('DOMContentLoaded', function() {
       feedbackForm.reset();
     });
   }
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startApp);
+} else {
+  startApp();
+}

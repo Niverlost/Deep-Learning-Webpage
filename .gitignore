@@ -35,4 +35,8 @@ dist/
 build/
 
 # Trae specific
+# 注意：.trae/rules/ 包含本地配置和凭证信息，不上传到仓库
 .trae/
+
+# Git 配置（包含远程仓库凭证）
+.git/config
