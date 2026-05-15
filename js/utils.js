@@ -156,7 +156,10 @@ export const CATEGORY_GRADIENTS = {
   '目标检测': 'linear-gradient(180deg, #f97316 0%, #ef4444 50%, #dc2626 100%)',
   '自然语言处理': 'linear-gradient(180deg, #a855f7 0%, #ec4899 50%, #f472b6 100%)',
   '图像生成': 'linear-gradient(180deg, #ec4899 0%, #f59e0b 50%, #fbbf24 100%)',
-  '大语言模型': 'linear-gradient(180deg, #06b6d4 0%, #38bdf8 50%, #6366f1 100%)'
+  '大语言模型': 'linear-gradient(180deg, #06b6d4 0%, #38bdf8 50%, #6366f1 100%)',
+  '基础算法': 'linear-gradient(180deg, #10b981 0%, #34d399 50%, #6ee7b7 100%)',
+  '语义分割': 'linear-gradient(180deg, #8b5cf6 0%, #a78bfa 50%, #c4b5fd 100%)',
+  '多模态': 'linear-gradient(180deg, #f59e0b 0%, #fbbf24 50%, #fde68a 100%)'
 };
 
 // ==================== 模块分类配置 ====================
@@ -185,6 +188,21 @@ export const MODULE_CATEGORIES = {
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>',
     color: 'cyan',
     desc: '大规模预训练语言模型与通用 AI'
+  },
+  '基础算法': {
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+    color: 'green',
+    desc: '深度学习的基础算法与核心训练方法'
+  },
+  '语义分割': {
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
+    color: 'purple',
+    desc: '像素级图像理解与精细分割'
+  },
+  '多模态': {
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>',
+    color: 'orange',
+    desc: '跨模态理解与多源信息融合'
   }
 };
 
@@ -520,6 +538,7 @@ export function initTermTooltips() {
   }
 
   document.addEventListener('mouseenter', function(e) {
+    if (!e.target || !e.target.closest) return;
     const termEl = e.target.closest('.term');
     if (!termEl) return;
     const definition = termEl.getAttribute('title');
@@ -530,6 +549,7 @@ export function initTermTooltips() {
   }, true);
 
   document.addEventListener('mouseleave', function(e) {
+    if (!e.target || !e.target.closest) return;
     const termEl = e.target.closest('.term');
     if (!termEl) return;
     termTooltipEl.classList.remove('visible');

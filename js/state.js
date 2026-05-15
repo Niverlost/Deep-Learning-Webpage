@@ -365,12 +365,19 @@ function initSpotlightTracking(hero, spotlight) {
  * @param {HTMLElement} statsCard - 统计卡片元素
  */
 function initStripeGlow(statsCard) {
+  let rafId = null;
+  let targetX = 0, targetY = 0;
   statsCard.addEventListener('mousemove', (e) => {
     const rect = statsCard.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    statsCard.style.setProperty('--tilt-x', x + '%');
-    statsCard.style.setProperty('--tilt-y', y + '%');
+    targetX = ((e.clientX - rect.left) / rect.width) * 100;
+    targetY = ((e.clientY - rect.top) / rect.height) * 100;
+    if (!rafId) {
+      rafId = requestAnimationFrame(() => {
+        statsCard.style.setProperty('--tilt-x', targetX + '%');
+        statsCard.style.setProperty('--tilt-y', targetY + '%');
+        rafId = null;
+      });
+    }
   });
 }
 

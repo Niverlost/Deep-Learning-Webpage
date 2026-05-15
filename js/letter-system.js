@@ -1,5 +1,3 @@
-import { state } from './state.js';
-
 const CONFIG = {
   spring: {
     hover: { stiffness: 0.35, damping: 0.55, mass: 1.0 },
@@ -77,9 +75,9 @@ const VALID_STATES = ['idle', 'hover', 'lazy', 'social', 'scared'];
 const STATE_TRANSITIONS = {
   idle:    ['hover', 'lazy', 'social', 'scared'],
   hover:   ['idle', 'scared'],
-  lazy:    ['idle'],
-  social:  ['idle'],
-  scared:  ['idle'],
+  lazy:    ['idle', 'hover', 'scared'],
+  social:  ['idle', 'scared'],
+  scared:  ['idle', 'hover', 'lazy', 'social'],
 };
 
 function createTimerTracker() {
@@ -145,13 +143,23 @@ function createParticleEngine(canvas) {
     zzz:     { color: '#CE82FF', size: 10, life: 2000, gravity: -0.015,shape: 'text' },
   };
 
+  function toCanvasPoint(x, y) {
+    const rect = canvas.getBoundingClientRect();
+    const dpr = canvas._dpr || 1;
+    return {
+      x: (x - rect.left) * dpr,
+      y: (y - rect.top) * dpr,
+    };
+  }
+
   function spawn(x, y, type, count) {
     const template = PARTICLE_TYPES[type];
     if (!template) return;
+    const point = toCanvasPoint(x, y);
     for (let i = 0; i < (count || 1); i++) {
       particles.push({
-        x: x + (Math.random() - 0.5) * 20,
-        y: y + (Math.random() - 0.5) * 10,
+        x: point.x + (Math.random() - 0.5) * 20,
+        y: point.y + (Math.random() - 0.5) * 10,
         vx: (Math.random() - 0.5) * 2,
         vy: (Math.random() - 0.5) * 2 - 1,
         life: template.life,
@@ -260,9 +268,13 @@ export class LetterCharacter {
     };
     this.fsmState = 'idle';
     this.previousState = null;
+    this.stateHistory = [];
     this.emotion = 'neutral';
+    this.bodyEmotionTransform = '';
     this.timers = createTimerTracker();
     this.positionCache = { rect: null, timestamp: 0 };
+    this.eyeLock = null;
+    this.breathOffset = 0;
     this.isHovered = false;
     this.isPressed = false;
     this.lazyAction = null;
@@ -350,14 +362,27 @@ export class LetterCharacter {
     el.style.transition = 'none';
   }
 
-  transitionTo(newState) {
-    if (!STATE_TRANSITIONS[this.fsmState]?.includes(newState)) return false;
+  transitionTo(newState, options = {}) {
+    if (!VALID_STATES.includes(newState)) return false;
+    if (this.fsmState === newState) return true;
+    if (!options.force && !STATE_TRANSITIONS[this.fsmState]?.includes(newState)) return false;
     const oldState = this.fsmState;
     this.previousState = oldState;
+    if (options.remember && oldState !== 'idle') {
+      this.stateHistory = [oldState];
+    }
+    this._onExitState(oldState, newState);
     this.fsmState = newState;
-    this._onExitState(oldState);
-    this._onEnterState(newState);
+    this._onEnterState(newState, oldState);
     return true;
+  }
+
+  transitionBack() {
+    const previous = this.stateHistory.pop();
+    if (previous && previous !== this.fsmState) {
+      return this.transitionTo(previous, { force: true });
+    }
+    return this.transitionTo('idle', { force: true });
   }
 
   _onEnterState(newState) {
@@ -387,17 +412,22 @@ export class LetterCharacter {
 
   _onExitState(oldState) {
     if (oldState === 'lazy') {
+      if (this.element) {
+        this.element.classList.remove('stretching', 'rubbing-eyes');
+      }
       this.lazyAction = null;
       this.timers.clearAll();
     }
   }
 
   setEmotion(emotion) {
+    if (this.isSpace || !this.element) return;
     if (this.emotion === emotion) return;
     const prev = this.emotion;
     this.emotion = emotion;
     const params = EMOTION_PARAMS[emotion];
     if (!params) return;
+    this.bodyEmotionTransform = params.bodyTransform || '';
 
     const el = this.element;
     const allEmotions = Object.keys(EMOTION_PARAMS);
@@ -420,8 +450,24 @@ export class LetterCharacter {
     }
   }
 
+  lockEyesAt(x, y, duration = 1500) {
+    this.eyeLock = {
+      x,
+      y,
+      until: Date.now() + duration,
+    };
+  }
+
   updatePupils(mouseX, mouseY) {
     if (this.isSpace || !this.pupils.length) return;
+    if (this.eyeLock) {
+      if (Date.now() < this.eyeLock.until) {
+        mouseX = this.eyeLock.x;
+        mouseY = this.eyeLock.y;
+      } else {
+        this.eyeLock = null;
+      }
+    }
     const rect = this.getCachedRect();
     if (!rect) return;
     const cx = rect.left + rect.width / 2;
@@ -429,7 +475,12 @@ export class LetterCharacter {
     const dx = mouseX - cx;
     const dy = mouseY - cy;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < 1) return;
+    if (dist < 1) {
+      this.pupils.forEach(pupil => {
+        pupil.style.transform = 'translate(-50%, -50%) scale(var(--pupil-scale))';
+      });
+      return;
+    }
     const maxOff = CONFIG.interactions.pupilMaxOffset;
     const factor = CONFIG.interactions.pupilTrackingFactor;
     const offsetX = Math.sign(dx) * Math.min(dist * factor, maxOff);
@@ -441,7 +492,7 @@ export class LetterCharacter {
 
   getCachedRect() {
     const now = Date.now();
-    if (this.positionCache.rect && now - this.positionCache.timestamp < 100) {
+    if (this.positionCache.rect && now - this.positionCache.timestamp < 50) {
       return this.positionCache.rect;
     }
     if (!this.element) return null;
@@ -451,7 +502,7 @@ export class LetterCharacter {
     return rect;
   }
 
-  applyDistanceGradient(mouseX, mouseY) {
+  applyDistanceGradient(mouseX, mouseY, mouseSpeed = 0) {
     if (this.isSpace || this.fsmState === 'lazy') return;
     const rect = this.getCachedRect();
     if (!rect) return;
@@ -460,15 +511,18 @@ export class LetterCharacter {
     const dx = mouseX - cx;
     const dy = mouseY - cy;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const { gradientFar, gradientNear, scaredTriggerDist, scaredRecoveryDist, scaredSpeedThreshold } = CONFIG.interactions;
+    const { gradientFar, gradientMid, gradientNear, scaredTriggerDist, scaredRecoveryDist, scaredSpeedThreshold } = CONFIG.interactions;
 
-    if (dist < scaredTriggerDist && this.fsmState !== 'scared' && this.fsmState !== 'hover') {
+    if (dist < scaredTriggerDist &&
+        mouseSpeed <= scaredSpeedThreshold &&
+        this.fsmState !== 'scared' &&
+        this.fsmState !== 'hover') {
       this.triggerScared(dx);
       return;
     }
 
     if (this.fsmState === 'scared' && dist > scaredRecoveryDist) {
-      this.transitionTo('idle');
+      this.transitionBack();
       return;
     }
 
@@ -491,7 +545,8 @@ export class LetterCharacter {
   }
 
   triggerScared(directionX) {
-    if (!this.transitionTo('scared')) return;
+    if (!this.transitionTo('scared', { remember: true })) return;
+    this.timers.clearAll();
     this.setEmotion('scared');
     const pushDir = directionX > 0 ? -1 : 1;
     this.springs.x.target = pushDir * 12;
@@ -502,12 +557,13 @@ export class LetterCharacter {
     const scareDx = pushDir * 8;
     this.element.style.setProperty('--scare-dx', scareDx + 'px');
     this.timers.set(() => {
+      if (this.fsmState !== 'scared') return;
       this.springs.x.target = 0;
       this.springs.y.target = 0;
       this.springs.rotation.target = 0;
       this.springs.scaleX.target = 1;
       this.springs.scaleY.target = 1;
-      this.transitionTo('idle');
+      this.transitionBack();
     }, 800);
   }
 
@@ -515,17 +571,18 @@ export class LetterCharacter {
     this.setEmotion('happy');
     this.springs.scaleX.target = 0.9;
     this.springs.scaleY.target = 1.1;
+    const rect = this.getCachedRect();
     this.timers.set(() => {
       this.springs.scaleX.target = 1;
       this.springs.scaleY.target = 1;
     }, 200);
+    this.timers.set(() => {
+      if (this.fsmState === 'idle') this.setEmotion('neutral');
+    }, 1500);
     allChars.forEach(c => {
       if (c !== this && !c.isSpace && c.fsmState === 'idle') {
-        const rect = this.getCachedRect();
-        const cRect = c.getCachedRect();
-        if (rect && cRect) {
-          const dx = rect.left - cRect.left;
-          c.updatePupils(rect.left + rect.width / 2, rect.top + rect.height * 0.3);
+        if (rect) {
+          c.lockEyesAt(rect.left + rect.width / 2, rect.top + rect.height * 0.3, 1500);
         }
       }
     });
@@ -654,13 +711,17 @@ export class LetterCharacter {
 
   updateBreath(time) {
     if (this.isSpace) return;
-    if (this.fsmState !== 'idle') return;
+    if (this.fsmState !== 'idle') {
+      this.breathOffset = 0;
+      return;
+    }
     const breathOffset = Math.sin(time * 0.002 + this.breathPhase) * 0.8;
-    this.springs.y.target = this.springs.y.target + breathOffset * 0.1;
+    this.breathOffset = breathOffset;
   }
 
   destroy() {
     this.timers.clearAll();
+    this.eyeLock = null;
     if (this.element && this.element.parentNode) {
       this.element.parentNode.removeChild(this.element);
     }
@@ -687,9 +748,17 @@ export class LetterSystem {
     this.mouseSpeed = 0;
     this.snakeFrames = 0;
     this.snakeActive = false;
+    this.snakeStartedAt = 0;
     this.snakeCooldownUntil = 0;
     this.chorusTaps = [];
+    this.systemTimers = createTimerTracker();
+    this.pendingTapTimers = new Map();
+    this.lastTouchTapAt = 0;
+    this.touchActiveChar = null;
+    this.touchStart = null;
     this.lastTime = 0;
+    this.lastPointerMoveAt = 0;
+    this.hasPointer = false;
     this.lazyCheckTimer = null;
     this.socialWhisperTimer = null;
     this.socialEyeContactTimer = null;
@@ -726,9 +795,12 @@ export class LetterSystem {
   }
 
   _resizeCanvas() {
+    if (!this.container || !this.canvas) return;
     const rect = this.container.getBoundingClientRect();
-    this.canvas.width = rect.width;
-    this.canvas.height = rect.height;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.canvas._dpr = dpr;
+    this.canvas.width = Math.max(1, Math.round(rect.width * dpr));
+    this.canvas.height = Math.max(1, Math.round(rect.height * dpr));
   }
 
   _createCharacters() {
@@ -751,8 +823,40 @@ export class LetterSystem {
       char.element.addEventListener('mouseenter', () => this._onCharHoverStart(char));
       char.element.addEventListener('mouseleave', () => this._onCharHoverEnd(char));
       char.element.addEventListener('click', (e) => this._onCharClick(char, e));
-      char.element.addEventListener('dblclick', () => this._onCharDblClick(char));
+      char.element.addEventListener('dblclick', (e) => this._onCharDblClick(char, e));
+      char.element.addEventListener('keydown', (e) => this._onCharKeyDown(char, e));
     });
+  }
+
+  _findCharAt(x, y) {
+    return this.characters.find(char => {
+      if (char.isSpace || !char.element) return false;
+      const rect = char.getCachedRect();
+      return rect &&
+        x >= rect.left && x <= rect.right &&
+        y >= rect.top && y <= rect.bottom;
+    }) || null;
+  }
+
+  _clearPendingTap(char) {
+    const timerId = this.pendingTapTimers.get(char);
+    if (!timerId) return;
+    this.systemTimers.clear(timerId);
+    this.pendingTapTimers.delete(char);
+  }
+
+  _scheduleTap(char) {
+    if (!char || char.isSpace || this.entrancePhase) return;
+    this._clearPendingTap(char);
+    const timerId = this.systemTimers.set(() => {
+      this.pendingTapTimers.delete(char);
+      if (!this.isActive || !char.element) return;
+      char.lastInteractionTime = Date.now();
+      char.wakeUp();
+      char.triggerTap(this.characters);
+      this._registerChorusTap();
+    }, CONFIG.interactions.tapDelay);
+    this.pendingTapTimers.set(char, timerId);
   }
 
   _onMouseMove(e) {
@@ -760,6 +864,8 @@ export class LetterSystem {
     this.prevMouseY = this.mouseY;
     this.mouseX = e.clientX;
     this.mouseY = e.clientY;
+    this.hasPointer = true;
+    this.lastPointerMoveAt = Date.now();
     this.mouseSpeed = Math.sqrt(
       (this.mouseX - this.prevMouseX) ** 2 +
       (this.mouseY - this.prevMouseY) ** 2
@@ -769,14 +875,8 @@ export class LetterSystem {
 
   _onMouseDown(e) {
     this.bus.emit('press', { x: e.clientX, y: e.clientY });
-    this.characters.forEach(char => {
-      if (char.isSpace || !char.element) return;
-      const rect = char.getCachedRect();
-      if (rect && e.clientX >= rect.left && e.clientX <= rect.right &&
-          e.clientY >= rect.top && e.clientY <= rect.bottom) {
-        char.triggerPress();
-      }
-    });
+    const char = this._findCharAt(e.clientX, e.clientY);
+    if (char) char.triggerPress();
   }
 
   _onMouseUp(e) {
@@ -791,6 +891,18 @@ export class LetterSystem {
       const t = e.touches[0];
       this.mouseX = t.clientX;
       this.mouseY = t.clientY;
+      this.hasPointer = true;
+      this.lastPointerMoveAt = Date.now();
+      this.touchActiveChar = this._findCharAt(t.clientX, t.clientY);
+      this.touchStart = { x: t.clientX, y: t.clientY, moved: false };
+      if (this.touchActiveChar) {
+        this.touchActiveChar.triggerPress();
+        this.systemTimers.set(() => {
+          if (this.touchActiveChar && !this.touchStart?.moved && this.touchActiveChar.isPressed) {
+            this._onCharHoverStart(this.touchActiveChar);
+          }
+        }, CONFIG.interactions.touchHoverDelay);
+      }
       this.bus.emit('press', { x: t.clientX, y: t.clientY });
     }
   }
@@ -802,10 +914,19 @@ export class LetterSystem {
       this.prevMouseY = this.mouseY;
       this.mouseX = t.clientX;
       this.mouseY = t.clientY;
+      this.hasPointer = true;
+      this.lastPointerMoveAt = Date.now();
       this.mouseSpeed = Math.sqrt(
         (this.mouseX - this.prevMouseX) ** 2 +
         (this.mouseY - this.prevMouseY) ** 2
       );
+      if (this.touchStart) {
+        const moved = Math.sqrt(
+          (this.mouseX - this.touchStart.x) ** 2 +
+          (this.mouseY - this.touchStart.y) ** 2
+        ) > 8;
+        this.touchStart.moved = this.touchStart.moved || moved;
+      }
       this.bus.emit('move', { x: this.mouseX, y: this.mouseY, speed: this.mouseSpeed });
     }
   }
@@ -815,6 +936,15 @@ export class LetterSystem {
     this.characters.forEach(char => {
       if (char.isPressed) char.triggerRelease();
     });
+    if (this.touchActiveChar && !this.touchStart?.moved) {
+      this.lastTouchTapAt = Date.now();
+      this._scheduleTap(this.touchActiveChar);
+    }
+    if (this.touchActiveChar?.isHovered) {
+      this._onCharHoverEnd(this.touchActiveChar);
+    }
+    this.touchActiveChar = null;
+    this.touchStart = null;
   }
 
   _onCharHoverStart(char) {
@@ -834,15 +964,23 @@ export class LetterSystem {
 
   _onCharClick(char, e) {
     if (this.entrancePhase) return;
-    char.lastInteractionTime = Date.now();
-    char.wakeUp();
-    char.triggerTap(this.characters);
-    this._registerChorusTap();
+    if (Date.now() - this.lastTouchTapAt < 500) return;
+    this._scheduleTap(char);
   }
 
-  _onCharDblClick(char) {
+  _onCharDblClick(char, e) {
     if (this.entrancePhase) return;
+    if (e) e.preventDefault();
+    this._clearPendingTap(char);
+    char.lastInteractionTime = Date.now();
+    char.wakeUp();
     char.triggerDoubleTap(this.particleEngine);
+  }
+
+  _onCharKeyDown(char, e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    this._scheduleTap(char);
   }
 
   _registerChorusTap() {
@@ -856,6 +994,7 @@ export class LetterSystem {
   }
 
   _triggerChorus() {
+    if (this.prefersReducedMotion) return;
     this.characters.forEach((char, i) => {
       if (char.isSpace) return;
       this._delayedAction(i * CONFIG.chorus.staggerDelay, () => {
@@ -878,10 +1017,21 @@ export class LetterSystem {
   }
 
   _delayedAction(delay, fn) {
-    setTimeout(fn, delay);
+    return this.systemTimers.set(() => {
+      if (!this.isActive) return;
+      fn();
+    }, delay);
   }
 
   _playEntrance() {
+    if (this.prefersReducedMotion) {
+      this.characters.forEach(char => {
+        if (char.isSpace || !char.element) return;
+        char.entranceComplete = true;
+      });
+      this.entrancePhase = false;
+      return;
+    }
     this.entrancePhase = true;
     const chars = this.characters.filter(c => !c.isSpace);
     const leader = chars[0];
@@ -898,8 +1048,8 @@ export class LetterSystem {
       char.element.style.animation = `letterWakeEntrance ${CONFIG.entrance.wakeDuration}s cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}s forwards`;
     });
 
-    const totalDuration = CONFIG.entrance.maxDelay + CONFIG.entrance.wakeDuration * 1000 + CONFIG.entrance.bufferMs;
-    setTimeout(() => {
+    const totalDuration = (CONFIG.entrance.maxDelay + CONFIG.entrance.wakeDuration) * 1000 + CONFIG.entrance.bufferMs;
+    this.systemTimers.set(() => {
       this.characters.forEach(char => {
         if (char.isSpace || !char.element) return;
         char.element.style.animation = '';
@@ -912,7 +1062,7 @@ export class LetterSystem {
         if (char.isSpace || !char.element) return;
         char.element.style.animation = 'letterGroupReveal 0.6s ease forwards';
       });
-      setTimeout(() => {
+      this.systemTimers.set(() => {
         this.characters.forEach(char => {
           if (char.isSpace || !char.element) return;
           char.element.style.animation = '';
@@ -926,11 +1076,12 @@ export class LetterSystem {
     this.lastTime = performance.now();
     this._tick(this.lastTime);
 
-    this.lazyCheckTimer = setInterval(() => this._checkLazyActions(), CONFIG.lazy.checkInterval);
-    this.socialWhisperTimer = setInterval(() => this._checkWhisper(), CONFIG.social.whisperInterval);
-    this.socialEyeContactTimer = setInterval(() => this._checkEyeContact(), CONFIG.social.eyeContactInterval);
-
-    this._checkCelebration();
+    if (!this.prefersReducedMotion) {
+      this.lazyCheckTimer = setInterval(() => this._checkLazyActions(), CONFIG.lazy.checkInterval);
+      this.socialWhisperTimer = setInterval(() => this._checkWhisper(), CONFIG.social.whisperInterval);
+      this.socialEyeContactTimer = setInterval(() => this._checkEyeContact(), CONFIG.social.eyeContactInterval);
+      this._checkCelebration();
+    }
   }
 
   _tick(time) {
@@ -970,10 +1121,11 @@ export class LetterSystem {
   }
 
   _updateDistanceGradient() {
-    if (this.prefersReducedMotion) return;
+    if (this.prefersReducedMotion || !this.hasPointer || this.snakeActive) return;
+    const pointerSpeed = Date.now() - this.lastPointerMoveAt > 120 ? 0 : this.mouseSpeed;
     this.characters.forEach(char => {
       if (char.isSpace || char.isHovered || char.fsmState === 'hover') return;
-      char.applyDistanceGradient(this.mouseX, this.mouseY);
+      char.applyDistanceGradient(this.mouseX, this.mouseY, pointerSpeed);
     });
   }
 
@@ -988,17 +1140,18 @@ export class LetterSystem {
       if (char.isSpace || !char.element) return;
       const { x, y, rotation, scaleX, scaleY } = char.springs;
       const tx = x.current;
-      const ty = y.current;
+      const ty = y.current + char.breathOffset;
       const rot = rotation.current;
       const sx = scaleX.current;
       const sy = scaleY.current;
 
       char.element.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg) scale(${sx}, ${sy})`;
 
-      if (char.bodyEl && Math.abs(rot) > 0.5) {
-        char.bodyEl.style.transform = `rotate(${-rot * 0.25}deg)`;
-      } else if (char.bodyEl) {
-        char.bodyEl.style.transform = '';
+      if (char.bodyEl) {
+        const transforms = [];
+        if (char.bodyEmotionTransform) transforms.push(char.bodyEmotionTransform);
+        if (Math.abs(rot) > 0.5) transforms.push(`rotate(${-rot * 0.25}deg)`);
+        char.bodyEl.style.transform = transforms.join(' ');
       }
     });
   }
@@ -1018,7 +1171,7 @@ export class LetterSystem {
   }
 
   _checkLazyActions() {
-    if (!this.isActive) return;
+    if (!this.isActive || this.prefersReducedMotion || this.entrancePhase || this.snakeActive) return;
     const now = Date.now();
     this.characters.forEach(char => {
       if (char.isSpace) return;

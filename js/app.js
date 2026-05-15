@@ -38,7 +38,7 @@ import {
   createCodeBlock, createCompareTable, createPathCard,
   createCompareCard, createAdminTableRow,
   createModelDetailHeader, createModelDetailDesc,
-  attachModelCardEvents, initScrollAnimations,
+  attachModelCardEvents, setupModelGrid, initScrollAnimations,
   showLoading, hideLoading
 } from './ui-components.js';
 
@@ -218,17 +218,26 @@ function renderHomeView() {
       categoryCounts[m.category] = (categoryCounts[m.category] || 0) + 1;
     });
     const categories = Object.keys(categoryCounts);
-    moduleGrid.innerHTML = categories.map(cat => {
+    moduleGrid.innerHTML = categories.map((cat, index) => {
       const config = MODULE_CATEGORIES[cat] || {};
-      return createCategoryCard(cat, categoryCounts[cat], config.icon || '');
+      return createCategoryCard(cat, categoryCounts[cat], config.icon || '', config.desc || '', index);
     }).join('');
+    moduleGrid.addEventListener('click', (e) => {
+      const card = e.target.closest('.category-card');
+      if (card) navigate('category', { category: card.dataset.category });
+    });
+    moduleGrid.addEventListener('keydown', (e) => {
+      const card = e.target.closest('.category-card');
+      if (card && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        navigate('category', { category: card.dataset.category });
+      }
+    });
     moduleGrid.querySelectorAll('.category-card').forEach(card => {
-      card.addEventListener('click', () => navigate('category', { category: card.dataset.category }));
-      card.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          navigate('category', { category: card.dataset.category });
-        }
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--ripple-x', ((e.clientX - rect.left) / rect.width * 100) + '%');
+        card.style.setProperty('--ripple-y', ((e.clientY - rect.top) / rect.height * 100) + '%');
       });
     });
   }
@@ -265,8 +274,8 @@ function renderCategoryView(category) {
       if (emptyState) emptyState.style.display = 'block';
     } else {
       if (emptyState) emptyState.style.display = 'none';
-      modelGrid.innerHTML = filtered.map(m => createModelCard(m)).join('');
-      attachModelCardEvents(modelGrid, {
+      modelGrid.innerHTML = filtered.map((m, i) => createModelCard(m, { index: i })).join('');
+      setupModelGrid(modelGrid, {
         onView: (modelName) => navigate('model', { name: modelName }),
         onCardClick: (modelName) => navigate('model', { name: modelName })
       });
@@ -279,7 +288,9 @@ function renderCategoryView(category) {
     searchInput.addEventListener('input', debounce((e) => {
       const term = e.target.value.trim().toLowerCase();
       const filtered = term
-        ? models.filter(m => (m.name + m.desc + m.tags?.join('')).toLowerCase().includes(term))
+        ? models.filter(m => (
+            m.name + (m.description || m.desc || '') + (m.tags?.join('') || '') + m.category + (m.architecture || '')
+          ).toLowerCase().includes(term))
         : models;
       renderModels(filtered);
     }, CONFIG.SEARCH_DEBOUNCE));
@@ -305,12 +316,32 @@ function renderModelDetailView(name) {
   if (breadcrumbName) breadcrumbName.textContent = model.name;
 
   modelPageBody.innerHTML = `
-    ${createModelDetailHeader(model)}
-    ${createModelDetailDesc(model)}
-    <div class="model-viz-container" id="modelViz"></div>
-    <div class="model-params-container" id="modelParams"></div>
-    <div class="model-code-container" id="modelCode"></div>
+    <div class="detail-layout">
+      <div class="detail-main">
+        ${createModelDetailHeader(model)}
+        <div class="model-viz-container" id="modelViz"></div>
+        <div class="model-params-container" id="modelParams"></div>
+        <div class="model-code-container" id="modelCode"></div>
+      </div>
+      ${createModelDetailDesc(model)}
+    </div>
   `;
+
+  const accordionHeaders = modelPageBody.querySelectorAll('.accordion-header');
+  accordionHeaders.forEach(header => {
+    header.addEventListener('click', () => {
+      const section = header.closest('.accordion-section');
+      const isExpanded = section.getAttribute('aria-expanded') === 'true';
+      section.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+      header.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+    });
+    header.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        header.click();
+      }
+    });
+  });
 
   const vizContainer = document.getElementById('modelViz');
   if (vizContainer) {
@@ -341,8 +372,8 @@ function renderFavoritesView() {
   } else {
     if (favEmptyState) favEmptyState.style.display = 'none';
     if (favModelGrid) {
-      favModelGrid.innerHTML = favModels.map(m => createModelCard(m)).join('');
-      attachModelCardEvents(favModelGrid, {
+      favModelGrid.innerHTML = favModels.map((m, i) => createModelCard(m, { index: i })).join('');
+      setupModelGrid(favModelGrid, {
         onView: (modelName) => navigate('model', { name: modelName }),
         onCardClick: (modelName) => navigate('model', { name: modelName })
       });
@@ -414,15 +445,16 @@ function renderLearningPathView() {
 // ESC 关闭模态框
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') {
-    closeAllModals();
+    const activeModal = document.querySelector('.modal-overlay.active');
+    if (activeModal) closeModal(activeModal.id);
   }
 });
 
 // 点击模态框背景关闭
-document.addEventListener('click', function(e) {
-  if (e.target.classList.contains('modal-overlay')) {
-    closeModal(e.target.id);
-  }
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal(modal.id);
+  });
 });
 
 // 页面卸载或路由切换时清理资源
@@ -445,6 +477,182 @@ window.checkPasswordStrength = checkPasswordStrength;
 window.toggleUserMenu = toggleUserMenu;
 window.logoutAdmin = logoutAdmin;
 window.logoutUser = logoutUser;
+window.showDetail = showDetail;
+window.updateRipple = updateRipple;
+
+// ============================================================
+// 缺失的全局函数（供内联 onclick 调用）
+// ============================================================
+
+function updateRipple(event, el) {
+  const rect = el.getBoundingClientRect();
+  const x = ((event.clientX - rect.left) / rect.width * 100).toFixed(1);
+  const y = ((event.clientY - rect.top) / rect.height * 100).toFixed(1);
+  el.style.setProperty('--ripple-x', x + '%');
+  el.style.setProperty('--ripple-y', y + '%');
+}
+
+function showDetail(id) {
+  const m = state.models.find(x => x.id === id);
+  if (!m) return;
+
+  const body = document.getElementById('detailBody');
+  body.innerHTML = `
+    <div class="detail-hero">
+      <h2>${escapeHtml(m.name)}</h2>
+      ${m.fullName ? `<p class="detail-fullname">${escapeHtml(m.fullName)}</p>` : ''}
+      <div class="detail-badges">
+        ${m.year ? `<span class="badge badge-year">${m.year}</span>` : ''}
+        ${m.category ? `<span class="badge badge-category">${escapeHtml(m.category)}</span>` : ''}
+        ${m.architecture ? `<span class="badge badge-arch">${escapeHtml(m.architecture)}</span>` : ''}
+      </div>
+    </div>
+
+    ${(m.authors || m.institution || m.architecture || (m.parameters || m.params)) ? `
+    <div class="detail-info-grid">
+      ${m.authors ? `<div class="detail-info-item"><div class="label">作者</div><div class="value">${escapeHtml(m.authors)}</div></div>` : ''}
+      ${m.institution ? `<div class="detail-info-item"><div class="label">机构</div><div class="value">${escapeHtml(m.institution)}</div></div>` : ''}
+      ${m.architecture ? `<div class="detail-info-item"><div class="label">架构</div><div class="value">${escapeHtml(m.architecture)}</div></div>` : ''}
+      ${(m.parameters || m.params) ? `<div class="detail-info-item"><div class="label">参数量</div><div class="value">${escapeHtml(m.parameters || m.params)}</div></div>` : ''}
+    </div>
+    ` : ''}
+
+    ${(m.description || m.desc) ? `
+    <div class="detail-desc">
+      ${addTermTooltips(m.description || m.desc)}
+    </div>
+    ` : ''}
+
+    ${m.innovation ? `
+    <div class="detail-desc" style="border-left-color: var(--accent-secondary);">
+      <strong style="color: var(--text-primary); display: block; margin-bottom: 4px;">核心创新</strong>
+      ${addTermTooltips(m.innovation)}
+    </div>
+    ` : ''}
+
+    ${m.tags && m.tags.length ? `
+    <div class="detail-tags">
+      ${m.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+    </div>
+    ` : ''}
+
+    ${(m.paperUrl || m.paper) ? `
+    <div class="detail-actions">
+      ${(m.paperUrl || m.paper) ? `<a href="${escapeHtml(m.paperUrl || m.paper)}" target="_blank" rel="noopener" class="btn btn-secondary">论文链接</a>` : ''}
+      <button class="btn btn-primary" data-action="view-full-detail" data-model="${escapeHtml(m.name).replace(/'/g, "\\'")}">查看完整详情 →</button>
+    </div>
+    ` : ''}
+  `;
+
+  openModal('detailModal');
+}
+
+function toggleCompareMode() {
+  if (!state.models) return;
+  const btn = document.getElementById('compareModeBtn');
+  const isActive = btn && btn.classList.contains('active');
+  if (isActive) {
+    btn.classList.remove('active');
+    compareState.selected = [];
+    document.querySelectorAll('.model-card').forEach(c => c.classList.remove('compare-selected'));
+    showToast('已退出对比模式', 'info');
+  } else {
+    btn.classList.add('active');
+    showToast('对比模式已开启，点击模型卡片进行选择', 'info');
+  }
+}
+
+function showAddForm() {
+  openModal('editModal');
+  const form = document.getElementById('editForm');
+  if (form) form.reset();
+  const title = document.getElementById('editModalTitle');
+  if (title) title.textContent = '添加模型';
+}
+
+function exportData() {
+  if (!state.models || state.models.length === 0) {
+    showToast('没有可导出的数据', 'warning');
+    return;
+  }
+  const dataStr = JSON.stringify(state.models, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'models-export-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('数据导出成功', 'success');
+}
+
+function showImportDialog() {
+  openModal('importModal');
+  const textarea = document.getElementById('importData');
+  const errorEl = document.getElementById('importError');
+  if (textarea) textarea.value = '';
+  if (errorEl) errorEl.style.display = 'none';
+}
+
+function importData() {
+  const textarea = document.getElementById('importData');
+  const errorEl = document.getElementById('importError');
+  if (!textarea) return;
+  const raw = textarea.value.trim();
+  if (!raw) {
+    if (errorEl) { errorEl.textContent = '请输入 JSON 数据'; errorEl.style.display = 'block'; }
+    return;
+  }
+  try {
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data)) throw new Error('数据必须是 JSON 数组');
+    state.models = data;
+    saveModels();
+    closeModal('importModal');
+    showToast('数据导入成功，共 ' + data.length + ' 条', 'success');
+    navigate('home');
+  } catch (e) {
+    if (errorEl) { errorEl.textContent = '导入失败：' + e.message; errorEl.style.display = 'block'; }
+  }
+}
+
+function showInteractionGuide() {
+  openModal('interactionGuideModal');
+}
+
+function clearSearch() {
+  var searchInput = document.getElementById('searchInput');
+  if (searchInput) {
+    searchInput.value = '';
+    searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+}
+
+function showCompare() {
+  navigate('compare');
+}
+
+function updateCompareUI() {
+  var bar = document.getElementById('compareBar');
+  var countEl = document.getElementById('compareBarCount');
+  var modelsEl = document.getElementById('compareBarModels');
+  var count = compareState.selected.length;
+  if (countEl) countEl.textContent = count;
+  if (modelsEl) modelsEl.textContent = compareState.selected.join('、');
+  if (bar) bar.style.display = count > 0 ? 'flex' : 'none';
+}
+
+window.toggleCompareMode = toggleCompareMode;
+window.showAddForm = showAddForm;
+window.exportData = exportData;
+window.showImportDialog = showImportDialog;
+window.importData = importData;
+window.showInteractionGuide = showInteractionGuide;
+window.clearSearch = clearSearch;
+window.showCompare = showCompare;
+window.updateCompareUI = updateCompareUI;
 
 // ============================================================
 // 应用启动入口（仅初始化一次）
