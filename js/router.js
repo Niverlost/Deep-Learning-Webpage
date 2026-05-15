@@ -20,7 +20,8 @@ let isNavigating = false;
  */
 function sanitizeRouteParam(param) {
   if (typeof param !== 'string') return '';
-  return param.replace(/[^a-zA-Z0-9一-鿿\-]/g, '');
+  // 仅移除可能导致 XSS 的字符，保留中文、字母、数字、常见标点
+  return param.replace(/[<>"'&]/g, '');
 }
 
 /**

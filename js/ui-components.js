@@ -260,6 +260,11 @@ export function createModelCard(model, opts = {}) {
         ${model.params ? `<span class="meta-tag params-tag">${escapeHtml(model.params)}</span>` : ''}
         ${model.acc ? `<span class="meta-tag acc-tag">${escapeHtml(model.acc)}</span>` : ''}
       </div>
+      ${model.tags && model.tags.length ? `
+        <div class="model-card-tags">
+          ${model.tags.map(tag => `<span class="model-tag">${escapeHtml(tag)}</span>`).join('')}
+        </div>
+      ` : ''}
       <div class="model-card-actions">
         <button class="btn btn-sm btn-primary view-model-btn" data-model="${escapeHtml(model.name)}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -693,7 +698,7 @@ export function createCompareTable(models) {
  * @returns {string} HTML 字符串
  */
 export function createPathCard(path) {
-  const modelsList = path.models.map(m => `<span class="path-model-tag">${escapeHtml(m)}</span>`).join('');
+  const modelsList = path.models.map(m => `<span class="path-model-tag" data-model="${escapeHtml(m)}">${escapeHtml(m)}</span>`).join('');
   return `<div class="path-card" data-path="${escapeHtml(path.id)}">
     <div class="path-card-header" style="background: ${path.color}">
       <div class="path-card-icon">${path.icon}</div>

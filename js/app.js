@@ -160,6 +160,12 @@ async function initApp() {
   // 9. 初始化 Hero 交互
   initHeroInteractions();
 
+  // 9.5 初始化字母小人系统
+  const letterStage = document.getElementById('letterStage');
+  if (letterStage) {
+    initLetterSystem(letterStage);
+  }
+
   // 10. 解析初始路由
   const { view, params } = parseHash();
   navigate(view, params);
@@ -226,6 +232,12 @@ function renderHomeView() {
       });
     });
   }
+
+  // 重新初始化字母小人系统（路由切换后会销毁）
+  const letterStage = document.getElementById('letterStage');
+  if (letterStage) {
+    initLetterSystem(letterStage);
+  }
 }
 
 function renderCategoryView(category) {
@@ -254,7 +266,10 @@ function renderCategoryView(category) {
     } else {
       if (emptyState) emptyState.style.display = 'none';
       modelGrid.innerHTML = filtered.map(m => createModelCard(m)).join('');
-      attachModelCardEvents(modelGrid);
+      attachModelCardEvents(modelGrid, {
+        onView: (modelName) => navigate('model', { name: modelName }),
+        onCardClick: (modelName) => navigate('model', { name: modelName })
+      });
     }
   }
 
@@ -327,7 +342,10 @@ function renderFavoritesView() {
     if (favEmptyState) favEmptyState.style.display = 'none';
     if (favModelGrid) {
       favModelGrid.innerHTML = favModels.map(m => createModelCard(m)).join('');
-      attachModelCardEvents(favModelGrid);
+      attachModelCardEvents(favModelGrid, {
+        onView: (modelName) => navigate('model', { name: modelName }),
+        onCardClick: (modelName) => navigate('model', { name: modelName })
+      });
     }
   }
 }
@@ -374,6 +392,19 @@ function renderLearningPathView() {
   if (!learningPathViewBody) return;
 
   learningPathViewBody.innerHTML = LEARNING_PATHS.map(path => createPathCard(path)).join('');
+
+  // 绑定模型标签点击事件
+  learningPathViewBody.querySelectorAll('.path-model-tag').forEach(tag => {
+    tag.addEventListener('click', () => {
+      const modelName = tag.dataset.model;
+      const model = state.models.find(m => m.name === modelName);
+      if (model) {
+        navigate('model', { name: modelName });
+      } else {
+        showToast(`模型 "${modelName}" 暂未收录`, 'warning');
+      }
+    });
+  });
 }
 
 // ============================================================
