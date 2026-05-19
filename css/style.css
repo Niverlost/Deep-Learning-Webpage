@@ -82,10 +82,10 @@
   --font-body: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Consolas', monospace;
 
-  /* Layout */
+  /* Layout - 响应式容器 */
   --header-height: 48px;
-  --container-max: 980px;
-  --container-padding: 20px;
+  --container-padding: 16px;
+  --container-max: 1400px;
 
   /* V6创新：字母尺寸CSS变量化 */
   --letter-D-w: 76px; --letter-D-h: 120px;
@@ -489,6 +489,37 @@ pre {
   color: var(--text-primary);
   margin-bottom: 24px;
   letter-spacing: -0.015em;
+}
+
+/* 响应式容器宽度 - 移动优先 (参考 Tailwind/Bootstrap 断点) */
+@media (min-width: 640px) {
+  .container, .section {
+    max-width: 640px;
+  }
+}
+
+@media (min-width: 768px) {
+  .container, .section {
+    max-width: 768px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container, .section {
+    max-width: 1024px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .container, .section {
+    max-width: 1280px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .container, .section {
+    max-width: 1400px;
+  }
 }
 
 /* ==================== 5. Header / Navigation ==================== */
@@ -2011,8 +2042,36 @@ pre {
 /* ==================== 8. Module / Category Cards ==================== */
 .module-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media (min-width: 640px) {
+  .module-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .module-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .module-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .module-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
 }
 
 .category-card {
@@ -2020,7 +2079,7 @@ pre {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
-  padding: 32px;
+  padding: 28px;
   cursor: pointer;
   overflow: hidden;
   transition: background var(--duration-normal) var(--apple-spring), border-color var(--duration-normal) var(--apple-spring), transform var(--duration-normal) var(--apple-spring), box-shadow var(--duration-normal) var(--apple-spring);
@@ -2132,29 +2191,9 @@ pre {
   font-size: 1.375rem;
   font-weight: 700;
   color: var(--text-primary);
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   letter-spacing: -0.02em;
   line-height: 1.2;
-}
-
-.category-card-desc {
-  color: var(--text-secondary);
-  font-size: 0.9375rem;
-  line-height: 1.5;
-  margin-bottom: 16px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.category-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  margin-top: auto;
-  padding-top: 16px;
-  border-top: 1px solid var(--border);
 }
 
 .category-card-count {
@@ -2176,6 +2215,7 @@ pre {
   border-radius: var(--radius-full);
   border: 1px solid var(--border);
   color: var(--text-secondary);
+  margin-top: auto;
   transition: background var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
@@ -2189,9 +2229,37 @@ pre {
 /* ==================== 9. Model Cards ==================== */
 .model-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 20px;
+  grid-template-columns: 1fr;
+  gap: 16px;
   padding-bottom: 60px;
+}
+
+@media (min-width: 640px) {
+  .model-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .model-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .model-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+}
+
+@media (min-width: 1536px) {
+  .model-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 28px;
+  }
 }
 
 .model-card {

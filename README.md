@@ -1,7 +1,7 @@
 # Deep-Learning-Webpage
 
 <p align="center">
-  <strong>An experimental front-end project for deep learning development.</strong>
+  <strong>一个纯前端实现的交互式深度学习模型浏览与学习平台。</strong>
 </p>
 
 <p align="center">
@@ -30,7 +30,7 @@
 
 ---
 
-> 一个纯前端实现的交互式深度学习模型浏览与学习平台，涵盖 **35+ 经典模型**，从 LeNet-5 到 GPT-4，带你纵览深度学习发展脉络。
+> 涵盖 **35+ 经典深度学习模型**，从 LeNet-5 到 GPT-4，带你纵览深度学习发展脉络。
 
 ---
 
@@ -42,7 +42,8 @@
 | 分类筛选 | 按图像分类、目标检测、语义分割、NLP、多模态等领域分类浏览 | ✅ |
 | 智能搜索 | 支持模型名称、标签、架构类型、作者等多维度搜索，带防抖与高亮 | ✅ |
 | 收藏对比 | 登录后可收藏模型，支持多模型横向对比（参数量、性能指标、创新点） | ✅ |
-| 架构可视化 | 交互式模型架构图，动态展示网络结构与数据流向 | ✅ |
+| 架构可视化 | 交互式模型架构图，动态展示网络结构与数据流向，支持块级展开与代码高亮 | ✅ |
+| 代码展示 | 自动生成 PyTorch 代码实现，支持语法高亮与一键复制 | ✅ |
 | 学习路径 | 按时间线与难度推荐学习顺序，从入门到进阶 | ✅ |
 | 管理后台 | 模型数据的增删改查、JSON 导入导出、本地持久化 | ✅ |
 | 主题切换 | 明暗双主题，跟随系统偏好，切换无闪烁 | ✅ |
@@ -68,20 +69,32 @@ Deep-Learning-Webpage/
 ├── css/
 │   └── style.css            # 全局样式（明暗主题、响应式布局）
 ├── js/
-│   ├── app.js               # 应用主入口
-│   ├── auth.js              # 用户认证模块
+│   ├── app.js               # 应用主入口，整合所有模块
+│   ├── auth.js              # 用户认证模块（登录/注册/收藏/权限）
 │   ├── letter-system.js     # 字母小人交互系统
-│   ├── router.js            # 前端路由
-│   ├── state.js             # 全局状态管理
-│   ├── ui-components.js     # UI 组件
-│   ├── utils.js             # 工具函数
-│   ├── viz-configs.js       # 可视化配置
-│   └── viz-engine.js        # 可视化引擎
-├── index.html               # 主页面（单页应用）
+│   ├── modal-system.js      # 模态框系统
+│   ├── models-data.js       # 内联模型数据（备用）
+│   ├── router.js            # Hash 路由系统（SPA）
+│   ├── state.js             # 全局状态管理与 localStorage 持久化
+│   ├── ui-components.js     # UI 组件工厂
+│   ├── utils.js             # 工具函数（格式化、debounce、加密、术语词典）
+│   ├── viz-configs.js       # 模型架构可视化配置
+│   └── viz-engine.js        # 可视化引擎（SVG 渲染）
+├── index.html               # 主页面（单页应用，含骨架屏）
 ├── CHANGELOG.md             # 更新日志
 ├── README.md                # 项目说明
 └── .gitignore               # Git 忽略配置
 ```
+
+---
+
+## 技术栈
+
+- **语言**: HTML5, CSS3, JavaScript (ES6+)
+- **无框架/无构建**: 纯静态文件，零依赖
+- **路由**: Hash-based SPA 路由
+- **存储**: localStorage（模型数据、用户认证、主题偏好、会话）
+- **可视化**: SVG + Canvas
 
 ---
 
@@ -95,6 +108,21 @@ Deep-Learning-Webpage/
 | Edge | 90+ | ✅ 完全支持 |
 
 > 项目使用 ES6+ 语法、CSS 变量、CSS Grid/Flexbox 等现代 Web 特性，建议使用最新版浏览器以获得最佳体验。
+
+---
+
+## 本地开发
+
+```bash
+# 克隆仓库
+git clone https://github.com/Niverlost/Deep-Learning-Webpage.git
+cd Deep-Learning-Webpage
+
+# 启动本地服务器（避免 CORS 问题）
+python -m http.server 8080
+
+# 访问 http://localhost:8080
+```
 
 ---
 
@@ -132,14 +160,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ```
-
----
-
-## 致谢
-
-感谢所有为本项目提供建议、反馈和贡献的朋友们。
-
-特别感谢深度学习领域的先驱研究者们，正是他们的杰出工作让这个项目有了丰富的内容。
 
 ---
 

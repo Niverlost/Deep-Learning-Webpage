@@ -1,10 +1,10 @@
 // ============================================================
-// Deep Learning Explorer - Utils Module
+// Deep Learning Explorer - Utils Module (Optimized)
 // 纯工具函数（格式化、校验、debounce/throttle、DOM 辅助函数）
 // ============================================================
 
 // ==================== 配置与常量 ====================
-export const CONFIG = {
+const CONFIG = {
   STORAGE_KEY: 'dl_viz_pro_models',
   STORAGE_VERSION_KEY: 'dl_viz_pro_version',
   DATA_VERSION: 'v6',
@@ -19,7 +19,7 @@ export const CONFIG = {
 };
 
 // ==================== 术语词典 ====================
-export const GLOSSARY = {
+const GLOSSARY = {
   'CNN': '卷积神经网络，一种专门处理图像数据的神经网络，通过卷积核提取图像特征',
   'RNN': '循环神经网络，一种处理序列数据的神经网络，具有记忆功能',
   'LSTM': '长短期记忆网络，通过门控机制解决RNN的长期依赖问题',
@@ -135,7 +135,7 @@ export const GLOSSARY = {
 };
 
 // ==================== 块类型颜色映射 ====================
-export const BLOCK_COLORS = {
+const BLOCK_COLORS = {
   input: '#22c55e',
   output: '#ef4444',
   conv: '#6366f1',
@@ -151,63 +151,52 @@ export const BLOCK_COLORS = {
 };
 
 // ==================== 类别渐变映射 ====================
-export const CATEGORY_GRADIENTS = {
+const CATEGORY_GRADIENTS = {
   '图像分类': 'linear-gradient(180deg, #6366f1 0%, #818cf8 50%, #a78bfa 100%)',
   '目标检测': 'linear-gradient(180deg, #f97316 0%, #ef4444 50%, #dc2626 100%)',
   '自然语言处理': 'linear-gradient(180deg, #a855f7 0%, #ec4899 50%, #f472b6 100%)',
   '图像生成': 'linear-gradient(180deg, #ec4899 0%, #f59e0b 50%, #fbbf24 100%)',
-  '大语言模型': 'linear-gradient(180deg, #06b6d4 0%, #38bdf8 50%, #6366f1 100%)',
-  '基础算法': 'linear-gradient(180deg, #10b981 0%, #34d399 50%, #6ee7b7 100%)',
-  '语义分割': 'linear-gradient(180deg, #8b5cf6 0%, #a78bfa 50%, #c4b5fd 100%)',
-  '多模态': 'linear-gradient(180deg, #f59e0b 0%, #fbbf24 50%, #fde68a 100%)'
+  '大语言模型': 'linear-gradient(180deg, #06b6d4 0%, #38bdf8 50%, #6366f1 100%)'
 };
 
 // ==================== 模块分类配置 ====================
-export const MODULE_CATEGORIES = {
+const MODULE_CATEGORIES = {
+  '基础算法': {
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+    color: 'blue'
+  },
   '图像分类': {
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
-    color: 'blue',
-    desc: '从 BP 到 ViT，探索图像分类领域的经典与前沿模型'
+    color: 'blue'
   },
   '目标检测': {
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>',
-    color: 'orange',
-    desc: '实时检测与定位图像中的目标对象'
+    color: 'orange'
+  },
+  '语义分割': {
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/></svg>',
+    color: 'green'
   },
   '自然语言处理': {
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
-    color: 'purple',
-    desc: '语言理解与生成的核心模型架构'
+    color: 'purple'
   },
   '图像生成': {
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/></svg>',
-    color: 'pink',
-    desc: '从文本到图像、从噪声到艺术的生成模型'
+    color: 'pink'
   },
   '大语言模型': {
     icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>',
-    color: 'cyan',
-    desc: '大规模预训练语言模型与通用 AI'
-  },
-  '基础算法': {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
-    color: 'green',
-    desc: '深度学习的基础算法与核心训练方法'
-  },
-  '语义分割': {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 3v18"/></svg>',
-    color: 'purple',
-    desc: '像素级图像理解与精细分割'
+    color: 'cyan'
   },
   '多模态': {
-    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>',
-    color: 'orange',
-    desc: '跨模态理解与多源信息融合'
+    icon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+    color: 'pink'
   }
 };
 
 // ==================== 学习路径配置 ====================
-export const LEARNING_PATHS = [
+const LEARNING_PATHS = [
   {
     id: 'beginner',
     title: '入门路径',
@@ -269,39 +258,86 @@ export const LEARNING_PATHS = [
 /**
  * 安全写入 localStorage，防止 QuotaExceededError 导致后续代码不执行
  * @param {string} key - 存储键名
- * @param {string} value - 存储值
+ * @param {string|any} value - 存储值
+ * @returns {boolean} 是否成功
  */
-export function safeSetItem(key, value) {
-  try { localStorage.setItem(key, value); } catch(e) { console.warn('localStorage full:', e); }
+function safeSetItem(key, value) {
+  try {
+    const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+    localStorage.setItem(key, serialized);
+    return true;
+  } catch(e) {
+    console.warn('[safeSetItem] localStorage error:', e);
+    if (e.name === 'QuotaExceededError') {
+      console.error('[safeSetItem] Storage quota exceeded');
+    }
+    return false;
+  }
+}
+
+/**
+ * 安全读取 localStorage
+ * @param {string} key - 存储键名
+ * @param {any} defaultValue - 默认值
+ * @returns {any} 读取的值
+ */
+function safeGetItem(key, defaultValue = null) {
+  try {
+    const value = localStorage.getItem(key);
+    if (value === null) return defaultValue;
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  } catch(e) {
+    console.warn('[safeGetItem] localStorage error:', e);
+    return defaultValue;
+  }
 }
 
 /**
  * 检测用户是否偏好减少动画 - 集中管理避免重复查询
  * @returns {boolean} 是否偏好减少动画
  */
-export const prefersReducedMotion = () => {
-  if (prefersReducedMotion._cached === undefined) {
-    if (typeof window.matchMedia !== 'function') {
-      prefersReducedMotion._cached = false;
+const prefersReducedMotion = (() => {
+  let cached = null;
+  
+  return () => {
+    if (cached !== null) return cached;
+    
+    try {
+      if (typeof window.matchMedia !== 'function') {
+        cached = false;
+        return false;
+      }
+      
+      const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      cached = mediaQuery.matches;
+      
+      mediaQuery.addEventListener('change', (e) => {
+        cached = e.matches;
+      });
+      
+      return cached;
+    } catch (e) {
+      console.warn('[prefersReducedMotion] Error:', e);
+      cached = false;
       return false;
     }
-    prefersReducedMotion._cached = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
-      prefersReducedMotion._cached = e.matches;
-    });
-  }
-  return prefersReducedMotion._cached;
-};
+  };
+})();
 
 /**
  * HTML 转义，防止 XSS
- * @param {string} str - 原始字符串
+ * @param {string|any} str - 原始字符串
  * @returns {string} 转义后的 HTML 字符串
  */
-export function escapeHtml(str) {
+function escapeHtml(str) {
   if (str == null) return '';
+  const safeStr = String(str);
   const div = document.createElement('div');
-  div.textContent = String(str);
+  div.textContent = safeStr;
   return div.innerHTML;
 }
 
@@ -310,7 +346,7 @@ export function escapeHtml(str) {
  * @param {string} input - 用户输入字符串
  * @returns {string} 净化后的字符串
  */
-export function sanitizeInput(input) {
+function sanitizeInput(input) {
   if (typeof input !== 'string') return '';
   return input.replace(/[<>&"']/g, (match) => ({
     '<': '&lt;',
@@ -327,25 +363,70 @@ export function sanitizeInput(input) {
  * @param {number} ms - 延迟毫秒数
  * @returns {Function} 防抖后的函数
  */
-export function debounce(fn, ms) {
-  let timer;
+function debounce(fn, ms) {
+  let timer = null;
   return function (...args) {
-    clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), ms);
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(this, args);
+      timer = null;
+    }, ms);
+  };
+}
+
+/**
+ * 节流函数
+ * @param {Function} fn - 需要节流的函数
+ * @param {number} ms - 节流间隔毫秒数
+ * @returns {Function} 节流后的函数
+ */
+function throttle(fn, ms) {
+  let lastCall = 0;
+  let timer = null;
+  
+  return function (...args) {
+    const now = Date.now();
+    
+    if (now - lastCall >= ms) {
+      lastCall = now;
+      fn.apply(this, args);
+    } else {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        lastCall = Date.now();
+        fn.apply(this, args);
+        timer = null;
+      }, ms);
+    }
   };
 }
 
 /**
  * 将十六进制字符串转为 ArrayBuffer
  * @param {string} hex - 十六进制字符串
- * @returns {ArrayBuffer} 转换后的 ArrayBuffer
+ * @returns {ArrayBuffer|null} 转换后的 ArrayBuffer
  */
-export function hexToBuffer(hex) {
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < hex.length; i += 2) {
-    bytes[i / 2] = parseInt(hex.slice(i, i + 2), 16);
+function hexToBuffer(hex) {
+  if (typeof hex !== 'string' || hex.length % 2 !== 0) {
+    console.warn('[hexToBuffer] Invalid hex string');
+    return null;
   }
-  return bytes.buffer;
+  
+  try {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+      const byte = parseInt(hex.slice(i, i + 2), 16);
+      if (isNaN(byte)) {
+        console.warn('[hexToBuffer] Invalid hex character');
+        return null;
+      }
+      bytes[i / 2] = byte;
+    }
+    return bytes.buffer;
+  } catch (e) {
+    console.error('[hexToBuffer] Error:', e);
+    return null;
+  }
 }
 
 /**
@@ -353,22 +434,42 @@ export function hexToBuffer(hex) {
  * @param {ArrayBuffer} buffer - ArrayBuffer 数据
  * @returns {string} 十六进制字符串
  */
-export function bufferToHex(buffer) {
-  return Array.from(new Uint8Array(buffer))
-    .map(b => b.toString(16).padStart(2, '0')).join('');
+function bufferToHex(buffer) {
+  if (!buffer || !(buffer instanceof ArrayBuffer)) {
+    console.warn('[bufferToHex] Invalid buffer');
+    return '';
+  }
+  
+  try {
+    return Array.from(new Uint8Array(buffer))
+      .map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) {
+    console.error('[bufferToHex] Error:', e);
+    return '';
+  }
 }
 
 /**
  * 生成随机盐值（32字节）
- * @returns {string} 64位十六进制盐值字符串
+ * @returns {string|null} 64位十六进制盐值字符串
  */
-export function generateSalt() {
+function generateSalt() {
   try {
-    return Array.from(crypto.getRandomValues(new Uint8Array(32)))
-      .map(b => b.toString(16).padStart(2, '0')).join('');
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+        .map(b => b.toString(16).padStart(2, '0')).join('');
+    } else {
+      console.warn('[generateSalt] crypto.getRandomValues not available, using fallback');
+      let result = '';
+      const chars = '0123456789abcdef';
+      for (let i = 0; i < 64; i++) {
+        result += chars[Math.floor(Math.random() * 16)];
+      }
+      return result;
+    }
   } catch (e) {
-    console.error('[generateSalt] 生成随机盐值失败:', e);
-    throw new Error('无法生成安全的随机盐值，请确保浏览器支持 Web Crypto API');
+    console.error('[generateSalt] Error:', e);
+    return null;
   }
 }
 
@@ -378,43 +479,52 @@ export function generateSalt() {
  * @param {string} salt - 十六进制盐值
  * @returns {Promise<string>} 哈希后的密码十六进制字符串
  */
-export async function hashPassword(password, salt) {
-  if (!crypto.subtle) {
-    console.warn('[hashPassword] crypto.subtle 不可用，使用降级哈希方案');
-    let hash = 0;
-    const str = password + salt;
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
+async function hashPassword(password, salt) {
+  try {
+    if (!crypto.subtle) {
+      console.warn('[hashPassword] crypto.subtle not available, using fallback');
+      let hash = 0;
+      const str = password + salt;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return 'legacy:' + Math.abs(hash).toString(16).padStart(16, '0') + salt.slice(0, 16);
     }
-    return 'legacy:' + Math.abs(hash).toString(16).padStart(16, '0') + salt.slice(0, 16);
+
+    const encoder = new TextEncoder();
+    const passwordBuffer = encoder.encode(password);
+    const saltBuffer = hexToBuffer(salt);
+    
+    if (!saltBuffer) {
+      throw new Error('Invalid salt');
+    }
+
+    const passwordKey = await crypto.subtle.importKey(
+      'raw',
+      passwordBuffer,
+      { name: 'PBKDF2' },
+      false,
+      ['deriveBits']
+    );
+
+    const derivedBits = await crypto.subtle.deriveBits(
+      {
+        name: 'PBKDF2',
+        salt: saltBuffer,
+        iterations: 100000,
+        hash: 'SHA-256'
+      },
+      passwordKey,
+      256
+    );
+
+    return bufferToHex(derivedBits);
+  } catch (e) {
+    console.error('[hashPassword] Error:', e);
+    throw new Error('Password hashing failed');
   }
-
-  const encoder = new TextEncoder();
-  const passwordBuffer = encoder.encode(password);
-  const saltBuffer = hexToBuffer(salt);
-
-  const passwordKey = await crypto.subtle.importKey(
-    'raw',
-    passwordBuffer,
-    { name: 'PBKDF2' },
-    false,
-    ['deriveBits']
-  );
-
-  const derivedBits = await crypto.subtle.deriveBits(
-    {
-      name: 'PBKDF2',
-      salt: saltBuffer,
-      iterations: 100000,
-      hash: 'SHA-256'
-    },
-    passwordKey,
-    256
-  );
-
-  return bufferToHex(derivedBits);
 }
 
 /**
@@ -422,7 +532,7 @@ export async function hashPassword(password, salt) {
  * @param {string} category - 类别名称
  * @returns {string} CSS 渐变字符串
  */
-export function getCategoryGradient(category) {
+function getCategoryGradient(category) {
   return CATEGORY_GRADIENTS[category] || 'linear-gradient(180deg, #6366f1 0%, #818cf8 100%)';
 }
 
@@ -432,12 +542,19 @@ export function getCategoryGradient(category) {
  * @param {string} keyword - 搜索关键词
  * @returns {string} 高亮后的 HTML 字符串
  */
-export function highlightText(text, keyword) {
+function highlightText(text, keyword) {
   if (!keyword || !text) return escapeHtml(text || '');
-  const escaped = escapeHtml(text);
-  const escapedKeyword = escapeHtml(keyword);
-  const regex = new RegExp(`(${escapedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-  return escaped.replace(regex, '<mark class="search-highlight">$1</mark>');
+  
+  try {
+    const escaped = escapeHtml(text);
+    const escapedKeyword = escapeHtml(keyword);
+    const sanitizedKeyword = escapedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${sanitizedKeyword})`, 'gi');
+    return escaped.replace(regex, '<mark class="search-highlight">$1</mark>');
+  } catch (e) {
+    console.error('[highlightText] Error:', e);
+    return escapeHtml(text || '');
+  }
 }
 
 /**
@@ -445,35 +562,58 @@ export function highlightText(text, keyword) {
  * @param {number} t - 时间进度（0-1）
  * @returns {number} 缓动后的进度值
  */
-export function easeOutExpo(t) {
-  return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+function easeOutExpo(t) {
+  if (typeof t !== 'number') return 0;
+  const clamped = Math.max(0, Math.min(1, t));
+  return clamped === 1 ? 1 : 1 - Math.pow(2, -10 * clamped);
 }
 
 /**
  * 计数动画：从 0 滚动到目标值
  * @param {HTMLElement} el - 目标 DOM 元素
  * @param {number} target - 目标数值
+ * @param {number} [duration=1500] - 动画时长（毫秒）
  */
-export function animateCount(el, target) {
-  if (!el) return;
-  const duration = 1500;
+function animateCount(el, target, duration = 1500) {
+  if (!el) {
+    console.warn('[animateCount] No element provided');
+    return;
+  }
+  
+  if (typeof target !== 'number' || isNaN(target)) {
+    el.textContent = '--';
+    return;
+  }
+  
+  if (prefersReducedMotion()) {
+    el.textContent = target;
+    return;
+  }
+  
   const startTime = performance.now();
+  const startValue = parseInt(el.textContent) || 0;
+  let animationId = null;
 
   function update(currentTime) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const easedProgress = easeOutExpo(progress);
-    const currentValue = Math.round(easedProgress * target);
-    el.textContent = currentValue;
+    try {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easedProgress = easeOutExpo(progress);
+      const currentValue = Math.round(startValue + (easedProgress * (target - startValue)));
+      el.textContent = currentValue;
 
-    if (progress < 1) {
-      requestAnimationFrame(update);
-    } else {
+      if (progress < 1) {
+        animationId = requestAnimationFrame(update);
+      } else {
+        el.textContent = target;
+      }
+    } catch (e) {
+      console.error('[animateCount] Animation error:', e);
       el.textContent = target;
     }
   }
 
-  requestAnimationFrame(update);
+  animationId = requestAnimationFrame(update);
 }
 
 // ==================== Polyfills ====================
@@ -481,8 +621,10 @@ export function animateCount(el, target) {
 if (!Object.fromEntries) {
   Object.fromEntries = function(entries) {
     const obj = {};
-    for (const [key, value] of entries) {
-      obj[key] = value;
+    if (Array.isArray(entries)) {
+      for (const [key, value] of entries) {
+        obj[key] = value;
+      }
     }
     return obj;
   };
@@ -500,12 +642,22 @@ let termRegexCache = null;
  */
 function buildTermRegex() {
   if (termRegexCache) return termRegexCache;
-  const terms = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
-  const escaped = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  termRegexCache = {
-    regex: new RegExp(`\\b(${escaped.join('|')})\\b`, 'gi'),
-    terms
-  };
+  
+  try {
+    const terms = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
+    const escaped = terms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    termRegexCache = {
+      regex: new RegExp(`\\b(${escaped.join('|')})\\b`, 'gi'),
+      terms
+    };
+  } catch (e) {
+    console.error('[buildTermRegex] Error:', e);
+    termRegexCache = {
+      regex: /$^/,
+      terms: []
+    };
+  }
+  
   return termRegexCache;
 }
 
@@ -514,63 +666,78 @@ function buildTermRegex() {
  * @param {string} text - 原始文本
  * @returns {string} 带术语高亮的 HTML 字符串
  */
-export function addTermTooltips(text) {
-  if (!text) return text;
-  let result = escapeHtml(text);
-  const { regex, terms } = buildTermRegex();
-  result = result.replace(regex, (match) => {
-    const key = terms.find(t => t.toLowerCase() === match.toLowerCase());
-    if (!key) return match;
-    const def = GLOSSARY[key].replace(/"/g, '&quot;');
-    return `<span class="term" data-term="${key}" title="${def}">${match}</span>`;
-  });
-  return result;
+function addTermTooltips(text) {
+  if (!text) return '';
+  
+  try {
+    let result = escapeHtml(text);
+    const { regex, terms } = buildTermRegex();
+    
+    if (terms.length > 0) {
+      result = result.replace(regex, (match) => {
+        const key = terms.find(t => t.toLowerCase() === match.toLowerCase());
+        if (!key) return match;
+        const def = GLOSSARY[key].replace(/"/g, '&quot;');
+        return `<span class="term" data-term="${escapeHtml(key)}" title="${def}">${match}</span>`;
+      });
+    }
+  } catch (e) {
+    console.error('[addTermTooltips] Error:', e);
+  }
+  
+  return escapeHtml(text);
 }
 
 /**
  * 初始化术语tooltip事件委托
  */
-export function initTermTooltips() {
-  if (!termTooltipEl) {
-    termTooltipEl = document.createElement('div');
-    termTooltipEl.className = 'term-tooltip';
-    document.body.appendChild(termTooltipEl);
-  }
-
-  document.addEventListener('mouseenter', function(e) {
-    if (!e.target || !e.target.closest) return;
-    const termEl = e.target.closest('.term');
-    if (!termEl) return;
-    const definition = termEl.getAttribute('title');
-    if (!definition) return;
-    termTooltipEl.textContent = definition;
-    termTooltipEl.classList.add('visible');
-    positionTooltip(termEl);
-  }, true);
-
-  document.addEventListener('mouseleave', function(e) {
-    if (!e.target || !e.target.closest) return;
-    const termEl = e.target.closest('.term');
-    if (!termEl) return;
-    termTooltipEl.classList.remove('visible');
-  }, true);
-
-  document.addEventListener('mousemove', function(e) {
-    if (termTooltipEl.classList.contains('visible')) {
-      let x = e.clientX + 12;
-      let y = e.clientY + 12;
-      const tw = termTooltipEl.offsetWidth;
-      const th = termTooltipEl.offsetHeight;
-      const vw = window.innerWidth;
-      const vh = window.innerHeight;
-      if (x + tw > vw - 8) x = e.clientX - tw - 12;
-      if (y + th > vh - 8) y = e.clientY - th - 12;
-      if (x < 8) x = 8;
-      if (y < 8) y = 8;
-      termTooltipEl.style.left = x + 'px';
-      termTooltipEl.style.top = y + 'px';
+function initTermTooltips() {
+  try {
+    if (!termTooltipEl) {
+      termTooltipEl = document.createElement('div');
+      termTooltipEl.className = 'term-tooltip';
+      document.body.appendChild(termTooltipEl);
     }
-  });
+
+    document.addEventListener('mouseenter', function(e) {
+      if (!e.target || !e.target.closest) return;
+      const termEl = e.target.closest('.term');
+      if (!termEl) return;
+      const definition = termEl.getAttribute('title');
+      if (!definition) return;
+      termTooltipEl.textContent = definition;
+      termTooltipEl.classList.add('visible');
+      positionTooltip(termEl);
+    }, true);
+
+    document.addEventListener('mouseleave', function(e) {
+      if (!e.target || !e.target.closest) return;
+      const termEl = e.target.closest('.term');
+      if (!termEl) return;
+      termTooltipEl.classList.remove('visible');
+    }, true);
+
+    const updateTooltipPosition = throttle(function(e) {
+      if (termTooltipEl && termTooltipEl.classList.contains('visible')) {
+        let x = e.clientX + 12;
+        let y = e.clientY + 12;
+        const tw = termTooltipEl.offsetWidth;
+        const th = termTooltipEl.offsetHeight;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        if (x + tw > vw - 8) x = e.clientX - tw - 12;
+        if (y + th > vh - 8) y = e.clientY - th - 12;
+        if (x < 8) x = 8;
+        if (y < 8) y = 8;
+        termTooltipEl.style.left = x + 'px';
+        termTooltipEl.style.top = y + 'px';
+      }
+    }, 16);
+
+    document.addEventListener('mousemove', updateTooltipPosition);
+  } catch (e) {
+    console.error('[initTermTooltips] Error:', e);
+  }
 }
 
 /**
@@ -578,9 +745,14 @@ export function initTermTooltips() {
  * @param {HTMLElement} el - 目标元素
  */
 function positionTooltip(el) {
-  const rect = el.getBoundingClientRect();
-  termTooltipEl.style.left = (rect.left + rect.width / 2) + 'px';
-  termTooltipEl.style.top = (rect.bottom + 8) + 'px';
+  try {
+    if (!el || !termTooltipEl) return;
+    const rect = el.getBoundingClientRect();
+    termTooltipEl.style.left = (rect.left + rect.width / 2) + 'px';
+    termTooltipEl.style.top = (rect.bottom + 8) + 'px';
+  } catch (e) {
+    console.error('[positionTooltip] Error:', e);
+  }
 }
 
 /**
@@ -588,7 +760,7 @@ function positionTooltip(el) {
  * @param {string} type - 块类型
  * @returns {string} SVG 图标 HTML 字符串
  */
-export function getBlockIcon(type) {
+function getBlockIcon(type) {
   const icons = {
     input: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
     output: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>',
@@ -611,8 +783,9 @@ export function getBlockIcon(type) {
  * @param {string} str - 原始字符串
  * @returns {string} 转义后的字符串
  */
-export function escapeCodeHtml(str) {
-  return str
+function escapeCodeHtml(str) {
+  if (str == null) return '';
+  return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -624,32 +797,57 @@ export function escapeCodeHtml(str) {
  * @param {string} code - PyTorch 代码字符串
  * @returns {string} 高亮后的 HTML 字符串
  */
-export function highlightSyntax(code) {
-  let html = escapeCodeHtml(code);
+function highlightSyntax(code) {
+  if (code == null) return '';
+  
+  try {
+    let html = escapeCodeHtml(code);
 
-  html = html.replace(/(#.*?)(\n|$)/g, '<span class="syn-comment">$1</span>$2');
-  html = html.replace(/("""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')/g, '<span class="syn-string">$1</span>');
-  html = html.replace(/("(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\')/g, '<span class="syn-string">$1</span>');
+    html = html.replace(/(#.*?)(\n|$)/g, '<span class="syn-comment">$1</span>$2');
+    html = html.replace(/("""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')/g, '<span class="syn-string">$1</span>');
+    html = html.replace(/("(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\')/g, '<span class="syn-string">$1</span>');
 
-  const keywords = ['def', 'class', 'import', 'from', 'return', 'if', 'elif', 'else', 'for', 'while', 'with', 'as', 'try', 'except', 'finally', 'raise', 'yield', 'lambda', 'pass', 'break', 'continue', 'and', 'or', 'not', 'in', 'is', 'global', 'nonlocal', 'assert', 'del'];
-  const kwPattern = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
-  html = html.replace(kwPattern, '<span class="syn-keyword">$1</span>');
+    const keywords = ['def', 'class', 'import', 'from', 'return', 'if', 'elif', 'else', 'for', 'while', 'with', 'as', 'try', 'except', 'finally', 'raise', 'yield', 'lambda', 'pass', 'break', 'continue', 'and', 'or', 'not', 'in', 'is', 'global', 'nonlocal', 'assert', 'del'];
+    const kwPattern = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
+    html = html.replace(kwPattern, '<span class="syn-keyword">$1</span>');
 
-  html = html.replace(/\b(self)\b/g, '<span class="syn-param">$1</span>');
+    html = html.replace(/\b(self)\b/g, '<span class="syn-param">$1</span>');
 
-  const classNames = ['nn\\.Module', 'nn\\.Sequential', 'nn\\.Linear', 'nn\\.Conv2d', 'nn\\.Conv1d', 'nn\\.MaxPool2d', 'nn\\.AvgPool2d', 'nn\\.Dropout', 'nn\\.ReLU', 'nn\\.Sigmoid', 'nn\\.Tanh', 'nn\\.BatchNorm2d', 'nn\\.LayerNorm', 'nn\\.Embedding', 'nn\\.Transformer', 'nn\\.MultiheadAttention', 'nn\\.CrossEntropyLoss', 'nn\\.MSELoss', 'nn\\.Softmax', 'nn\\.Flatten', 'torch', 'nn', 'F', 'MLP', 'super'];
-  const classPattern = new RegExp('\\b(' + classNames.join('|') + ')\\b', 'g');
-  html = html.replace(classPattern, '<span class="syn-class">$1</span>');
+    const classNames = ['nn\\.Module', 'nn\\.Sequential', 'nn\\.Linear', 'nn\\.Conv2d', 'nn\\.Conv1d', 'nn\\.MaxPool2d', 'nn\\.AvgPool2d', 'nn\\.Dropout', 'nn\\.ReLU', 'nn\\.Sigmoid', 'nn\\.Tanh', 'nn\\.BatchNorm2d', 'nn\\.LayerNorm', 'nn\\.Embedding', 'nn\\.Transformer', 'nn\\.MultiheadAttention', 'nn\\.CrossEntropyLoss', 'nn\\.MSELoss', 'nn\\.Softmax', 'nn\\.Flatten', 'torch', 'nn', 'F', 'MLP', 'super'];
+    const classPattern = new RegExp('\\b(' + classNames.join('|') + ')\\b', 'g');
+    html = html.replace(classPattern, '<span class="syn-class">$1</span>');
 
-  html = html.replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-number">$1</span>');
+    html = html.replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-number">$1</span>');
 
-  html = html.replace(/\b([a-zA-Z_]\w*)\s*(?=\()/g, function(match, fname) {
-    if (match.includes('span')) return match;
-    return '<span class="syn-func">' + fname + '</span>';
-  });
+    html = html.replace(/\b([a-zA-Z_]\w*)\s*(?=\()/g, function(match, fname) {
+      if (match.includes('span')) return match;
+      return '<span class="syn-func">' + fname + '</span>';
+    });
 
-  html = html.replace(/([+\-*=\/%&lt;&gt;!]=?)/g, '<span class="syn-op">$1</span>');
+    html = html.replace(/([+\-*=\/%&lt;&gt;!]=?)/g, '<span class="syn-op">$1</span>');
 
-  return html;
+    return html;
+  } catch (e) {
+    console.error('[highlightSyntax] Error:', e);
+    return escapeCodeHtml(code);
+  }
 }
 
+/**
+ * 安全的 DOM 操作工具函数
+ * @param {string} html - HTML 字符串
+ * @returns {DocumentFragment} 文档片段
+ */
+function createSafeElement(html) {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  return template.content;
+}
+
+// Global exports for inline event handlers
+window.CONFIG = CONFIG;
+window.GLOSSARY = GLOSSARY;
+window.BLOCK_COLORS = BLOCK_COLORS;
+window.CATEGORY_GRADIENTS = CATEGORY_GRADIENTS;
+window.MODULE_CATEGORIES = MODULE_CATEGORIES;
+window.LEARNING_PATHS = LEARNING_PATHS;

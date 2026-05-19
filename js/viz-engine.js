@@ -3,23 +3,37 @@
 // 可视化引擎（SVG 渲染、模型配置、层绘制）
 // ============================================================
 
-import { BLOCK_COLORS, getBlockIcon, escapeHtml, addTermTooltips, highlightSyntax } from './utils.js';
-import { state } from './state.js';
+
 
 // ==================== SVG 工具函数 ====================
+
+// SVG 命名空间
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
 /**
  * 创建 SVG 元素
  * @param {string} tag - SVG 标签名
  * @param {Object} [attrs={}] - 属性字典
- * @returns {SVGElement} 创建的 SVG 元素
+ * @returns {SVGElement|null} 创建的 SVG 元素
  */
-export function createSVGElement(tag, attrs = {}) {
-  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-  for (const [key, val] of Object.entries(attrs)) {
-    if (val !== undefined && val !== null) el.setAttribute(key, val);
+function createSVGElement(tag, attrs = {}) {
+  if (!tag || typeof tag !== 'string') {
+    console.warn('[Viz] Invalid SVG tag');
+    return null;
   }
-  return el;
+  
+  try {
+    const el = document.createElementNS(SVG_NAMESPACE, tag);
+    for (const [key, val] of Object.entries(attrs || {})) {
+      if (val !== undefined && val !== null) {
+        el.setAttribute(key, String(val));
+      }
+    }
+    return el;
+  } catch (e) {
+    console.error('[Viz] Failed to create SVG element:', e);
+    return null;
+  }
 }
 
 /**
@@ -28,10 +42,16 @@ export function createSVGElement(tag, attrs = {}) {
  * @param {number} x - X 坐标
  * @param {number} y - Y 坐标
  * @param {Object} [opts={}] - 选项
- * @returns {SVGTextElement} SVG 文本元素
+ * @returns {SVGTextElement|null} SVG 文本元素
  */
-export function createSVGText(text, x, y, opts = {}) {
-  const { fontSize = 12, fill = 'currentColor', textAnchor = 'start', fontWeight = 'normal' } = opts;
+function createSVGText(text, x, y, opts = {}) {
+  // 参数验证
+  if (typeof x !== 'number' || typeof y !== 'number') {
+    console.warn('[Viz] Invalid coordinates for SVG text');
+    return null;
+  }
+  
+  const { fontSize = 12, fill = 'currentColor', textAnchor = 'start', fontWeight = 'normal' } = opts || {};
   const el = createSVGElement('text', {
     x, y,
     'font-size': fontSize,
@@ -39,7 +59,10 @@ export function createSVGText(text, x, y, opts = {}) {
     'text-anchor': textAnchor,
     'font-weight': fontWeight
   });
-  el.textContent = text;
+  
+  if (el) {
+    el.textContent = text || '';
+  }
   return el;
 }
 
@@ -50,10 +73,16 @@ export function createSVGText(text, x, y, opts = {}) {
  * @param {number} width - 宽度
  * @param {number} height - 高度
  * @param {Object} [opts={}] - 选项
- * @returns {SVGRectElement} SVG 矩形元素
+ * @returns {SVGRectElement|null} SVG 矩形元素
  */
-export function createSVGRect(x, y, width, height, opts = {}) {
-  const { fill = 'none', stroke = 'none', strokeWidth = 0, rx = 0, ry = 0, opacity = 1 } = opts;
+function createSVGRect(x, y, width, height, opts = {}) {
+  // 参数验证
+  if (typeof x !== 'number' || typeof y !== 'number' || typeof width !== 'number' || typeof height !== 'number') {
+    console.warn('[Viz] Invalid dimensions for SVG rect');
+    return null;
+  }
+  
+  const { fill = 'none', stroke = 'none', strokeWidth = 0, rx = 0, ry = 0, opacity = 1 } = opts || {};
   return createSVGElement('rect', {
     x, y, width, height,
     fill, stroke,
@@ -69,10 +98,16 @@ export function createSVGRect(x, y, width, height, opts = {}) {
  * @param {number} cy - 圆心 Y
  * @param {number} r - 半径
  * @param {Object} [opts={}] - 选项
- * @returns {SVGCircleElement} SVG 圆形元素
+ * @returns {SVGCircleElement|null} SVG 圆形元素
  */
-export function createSVGCircle(cx, cy, r, opts = {}) {
-  const { fill = 'none', stroke = 'none', strokeWidth = 0, opacity = 1 } = opts;
+function createSVGCircle(cx, cy, r, opts = {}) {
+  // 参数验证
+  if (typeof cx !== 'number' || typeof cy !== 'number' || typeof r !== 'number') {
+    console.warn('[Viz] Invalid parameters for SVG circle');
+    return null;
+  }
+  
+  const { fill = 'none', stroke = 'none', strokeWidth = 0, opacity = 1 } = opts || {};
   return createSVGElement('circle', {
     cx, cy, r,
     fill, stroke,
@@ -85,10 +120,16 @@ export function createSVGCircle(cx, cy, r, opts = {}) {
  * 创建 SVG 路径
  * @param {string} d - 路径数据
  * @param {Object} [opts={}] - 选项
- * @returns {SVGPathElement} SVG 路径元素
+ * @returns {SVGPathElement|null} SVG 路径元素
  */
-export function createSVGPath(d, opts = {}) {
-  const { fill = 'none', stroke = 'none', strokeWidth = 1, strokeDasharray = 'none', opacity = 1 } = opts;
+function createSVGPath(d, opts = {}) {
+  // 参数验证
+  if (!d || typeof d !== 'string') {
+    console.warn('[Viz] Invalid path data for SVG path');
+    return null;
+  }
+  
+  const { fill = 'none', stroke = 'none', strokeWidth = 1, strokeDasharray = 'none', opacity = 1 } = opts || {};
   return createSVGElement('path', {
     d,
     fill, stroke,
@@ -104,7 +145,7 @@ export function createSVGPath(d, opts = {}) {
  * @param {string} color - 颜色
  * @returns {SVGMarkerElement} SVG 标记元素
  */
-export function createArrowMarker(id, color) {
+function createArrowMarker(id, color) {
   const marker = createSVGElement('marker', {
     id,
     markerWidth: '10',
@@ -129,7 +170,7 @@ export function createArrowMarker(id, color) {
  * @param {Object} model - 模型对象
  * @returns {Array} 可视化块数组
  */
-export function parseModelConfig(model) {
+function parseModelConfig(model) {
   const blocks = [];
 
   if (!model.config) return blocks;
@@ -174,7 +215,7 @@ export function parseModelConfig(model) {
  * @param {string} type - 块类型
  * @returns {string} 显示名称
  */
-export function getBlockTypeName(type) {
+function getBlockTypeName(type) {
   const names = {
     input: '输入层',
     output: '输出层',
@@ -205,7 +246,7 @@ export function getBlockTypeName(type) {
  * @param {Object} [opts={}] - 选项
  * @returns {SVGGElement} 块组元素
  */
-export function drawBlock(svg, block, x, y, width, height, opts = {}) {
+function drawBlock(svg, block, x, y, width, height, opts = {}) {
   const { isSelected = false, isExpanded = false, fontSizeName = 11, fontSizeType = 9 } = opts;
   const color = BLOCK_COLORS[block.type] || BLOCK_COLORS.custom;
   const group = createSVGElement('g', {
@@ -261,7 +302,7 @@ export function drawBlock(svg, block, x, y, width, height, opts = {}) {
  * @param {Object} [opts={}] - 选项
  * @returns {SVGPathElement} 连接线路径
  */
-export function drawConnection(svg, fromX, fromY, toX, toY, opts = {}) {
+function drawConnection(svg, fromX, fromY, toX, toY, opts = {}) {
   const { color = 'rgba(255,255,255,0.2)', strokeWidth = 1, dashed = false } = opts;
 
   const path = createSVGPath(`M${fromX},${fromY} L${toX},${toY}`, {
@@ -283,7 +324,7 @@ export function drawConnection(svg, fromX, fromY, toX, toY, opts = {}) {
  * @param {Object} [opts={}] - 选项
  * @returns {SVGGElement} 箭头组元素
  */
-export function drawFlowArrow(svg, fromX, fromY, toX, toY, opts = {}) {
+function drawFlowArrow(svg, fromX, fromY, toX, toY, opts = {}) {
   const { color = 'rgba(255,255,255,0.3)' } = opts;
 
   const midX = (fromX + toX) / 2;
@@ -388,19 +429,48 @@ function createVizSvg(layout) {
  * @param {HTMLElement} container - 容器元素
  * @param {Object} model - 模型对象
  */
-export function renderModelViz(container, model) {
-  if (!container || !model) return;
+function renderModelViz(container, model) {
+  // 参数验证
+  if (!container) {
+    console.warn('[VizEngine] 渲染失败：无效的容器');
+    return;
+  }
+  
+  if (!model || typeof model !== 'object') {
+    console.warn('[VizEngine] 渲染失败：无效的模型数据');
+    renderEmptyViz(container);
+    return;
+  }
 
   // 安全：清空容器后使用安全的 DOM 操作
-  container.innerHTML = '';
+  try {
+    container.innerHTML = '';
+  } catch (e) {
+    console.error('[VizEngine] 清空容器失败:', e);
+    return;
+  }
+  
+  if (!model.config || typeof model.config !== 'object') {
+    console.warn('[VizEngine] 模型缺少 config 数据:', model.name || 'Unknown');
+    renderEmptyViz(container);
+    return;
+  }
+  
   const blocks = parseModelConfig(model);
-  if (blocks.length === 0) {
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    console.info('[VizEngine] 模型无可视化数据:', model.name || 'Unknown');
     renderEmptyViz(container);
     return;
   }
 
   const layout = calculateVizLayout(container, blocks);
   const svg = createVizSvg(layout);
+  
+  if (!svg) {
+    console.error('[VizEngine] 创建 SVG 失败');
+    renderEmptyViz(container);
+    return;
+  }
 
   let prevY = null;
   let prevX = null;
@@ -410,18 +480,31 @@ export function renderModelViz(container, model) {
     const y = layout.startY + index * (layout.blockHeight + layout.gap);
 
     // 绘制连接线
-    if (prevY !== null) {
-      const connection = drawFlowArrow(svg, prevX + layout.blockWidth / 2, prevY + layout.blockHeight, x + layout.blockWidth / 2, y);
-      svg.appendChild(connection);
+    if (prevY !== null && prevX !== null) {
+      try {
+        const connection = drawFlowArrow(svg, prevX + layout.blockWidth / 2, prevY + layout.blockHeight, x + layout.blockWidth / 2, y);
+        if (connection) {
+          svg.appendChild(connection);
+        }
+      } catch (e) {
+        console.warn('[VizEngine] 绘制连接线失败:', e);
+      }
     }
 
     // 绘制块（传入字体大小选项）
-    const blockGroup = drawBlock(svg, block, x, y, layout.blockWidth, layout.blockHeight, {
-      isSelected: state.vizState.selectedBlock === block.name,
-      fontSizeName: layout.fontSizeName,
-      fontSizeType: layout.fontSizeType
-    });
-    svg.appendChild(blockGroup);
+    try {
+      const isSelected = state && state.vizState && state.vizState.selectedBlock === block.name;
+      const blockGroup = drawBlock(svg, block, x, y, layout.blockWidth, layout.blockHeight, {
+        isSelected,
+        fontSizeName: layout.fontSizeName,
+        fontSizeType: layout.fontSizeType
+      });
+      if (blockGroup) {
+        svg.appendChild(blockGroup);
+      }
+    } catch (e) {
+      console.warn('[VizEngine] 绘制块失败:', e);
+    }
 
     prevX = x;
     prevY = y;
@@ -478,8 +561,11 @@ function generateParamRow(param) {
  * @param {HTMLElement} container - 容器元素
  * @param {Object} model - 模型对象
  */
-export function renderParamsTable(container, model) {
-  if (!container || !model || !model.config) return;
+function renderParamsTable(container, model) {
+  if (!container || !model || !model.config) {
+    console.warn('[VizEngine] 参数表格渲染失败：无效参数');
+    return;
+  }
 
   const params = collectModelParams(model);
 
@@ -564,8 +650,11 @@ function collectModelTreeHtml(model) {
  * @param {HTMLElement} container - 容器元素
  * @param {Object} model - 模型对象
  */
-export function renderModelTree(container, model) {
-  if (!container || !model || !model.config) return;
+function renderModelTree(container, model) {
+  if (!container || !model || !model.config) {
+    console.warn('[VizEngine] 结构树渲染失败：无效参数');
+    return;
+  }
 
   const html = collectModelTreeHtml(model);
 
@@ -624,7 +713,7 @@ function handleBlockClick(container, e) {
  * 初始化可视化交互
  * @param {HTMLElement} container - 容器元素
  */
-export function initVizInteractions(container) {
+function initVizInteractions(container) {
   if (!container) return;
 
   // 如果已经绑定过，先清理旧监听器
@@ -640,7 +729,7 @@ export function initVizInteractions(container) {
  * 清理可视化交互
  * @param {HTMLElement} container - 容器元素
  */
-export function destroyVizInteractions(container) {
+function destroyVizInteractions(container) {
   if (!container) return;
   const oldHandler = vizInteractionMap.get(container);
   if (oldHandler) {
@@ -654,7 +743,7 @@ export function destroyVizInteractions(container) {
  * @param {HTMLElement} container - 容器元素
  * @param {string} type - 块类型
  */
-export function highlightBlockType(container, type) {
+function highlightBlockType(container, type) {
   if (!container) return;
   container.querySelectorAll('.viz-block').forEach(block => {
     if (block.dataset.blockType === type) {
@@ -669,7 +758,7 @@ export function highlightBlockType(container, type) {
  * 清除高亮
  * @param {HTMLElement} container - 容器元素
  */
-export function clearHighlight(container) {
+function clearHighlight(container) {
   if (!container) return;
   container.querySelectorAll('.viz-block').forEach(block => {
     block.classList.remove('highlighted');
@@ -690,7 +779,7 @@ function safeRemove(element) {
  * 销毁可视化：清理 SVG、事件监听、tooltip/popover
  * @param {HTMLElement} container - 容器元素
  */
-export function destroyVisualization(container) {
+function destroyVisualization(container) {
   if (!container) return;
 
   // 清理交互事件
@@ -721,7 +810,7 @@ export function destroyVisualization(container) {
  * @param {SVGElement} svgElement - SVG 元素
  * @param {string} [filename='model-viz.png'] - 文件名
  */
-export function exportSVGToPNG(svgElement, filename = 'model-viz.png') {
+function exportSVGToPNG(svgElement, filename = 'model-viz.png') {
   if (!svgElement) return;
 
   const svgData = new XMLSerializer().serializeToString(svgElement);
@@ -773,7 +862,7 @@ export function exportSVGToPNG(svgElement, filename = 'model-viz.png') {
  * 导出模型配置为 JSON
  * @param {Object} model - 模型对象
  */
-export function exportModelConfig(model) {
+function exportModelConfig(model) {
   if (!model || !model.config) return;
 
   const dataStr = JSON.stringify(model.config, null, 2);
@@ -814,7 +903,7 @@ function buildCompareExportData(models) {
  * 导出对比结果为 JSON
  * @param {Array} models - 模型数组
  */
-export function exportCompareResult(models) {
+function exportCompareResult(models) {
   if (!models || models.length === 0) return;
 
   const exportData = buildCompareExportData(models);

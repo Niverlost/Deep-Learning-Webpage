@@ -3,12 +3,19 @@
 // UI 组件（模态框、卡片、按钮、骨架屏、Toast）
 // ============================================================
 
-import { escapeHtml, highlightText, getCategoryGradient, animateCount, addTermTooltips, debounce, CONFIG, MODULE_CATEGORIES } from './utils.js';
-import { state } from './state.js';
-import { userState, hasPermission, toggleFavorite, subscribeToFavorites } from './auth.js';
-import { navigate } from './router.js';
+
 
 // ==================== Toast 通知系统 ====================
+
+// Toast 配置
+const TOAST_CONFIG = {
+  defaultDuration: 4000,
+  maxToasts: 5,
+  animationDuration: 300
+};
+
+// 活跃的 Toast 元素引用
+const activeToasts = new Set();
 
 /**
  * 获取 Toast 图标 SVG
@@ -26,34 +33,86 @@ function getToastIcon(type) {
 }
 
 /**
+ * 清理过期的 Toast
+ */
+function cleanupOldToasts() {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+  
+  const toasts = container.querySelectorAll('.toast');
+  if (toasts.length >= TOAST_CONFIG.maxToasts) {
+    const oldestToast = toasts[0];
+    dismissToast(oldestToast);
+  }
+}
+
+/**
+ * 移除 Toast
+ * @param {HTMLElement} toast - Toast 元素
+ */
+function dismissToast(toast) {
+  if (!toast || !toast.parentNode) return;
+  
+  toast.classList.remove('show');
+  toast.addEventListener('transitionend', () => {
+    if (toast.parentNode) {
+      toast.parentNode.removeChild(toast);
+      activeToasts.delete(toast);
+    }
+  }, { once: true });
+}
+
+/**
  * 显示 Toast 通知
  * @param {string} message - 消息内容
  * @param {string} [type='info'] - 通知类型
+ * @param {number} [duration] - 显示时长（毫秒）
  */
-export function showToast(message, type = 'info') {
+function showToast(message, type = 'info', duration) {
   const container = document.getElementById('toastContainer');
-  if (!container) return;
+  if (!container) {
+    console.warn('[Toast] Toast container not found');
+    return;
+  }
+  
+  // 参数验证
+  if (!message || typeof message !== 'string') {
+    console.warn('[Toast] Invalid message');
+    return;
+  }
+  
+  // 清理旧的 Toast
+  cleanupOldToasts();
+  
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-  toast.setAttribute('role', 'status');
-  toast.setAttribute('aria-live', 'polite');
+  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  toast.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
+  toast.setAttribute('aria-atomic', 'true');
 
   // 安全：icons 是硬编码的 SVG，message 已转义
   toast.innerHTML = `${getToastIcon(type)}<span>${escapeHtml(message)}</span>`;
   container.appendChild(toast);
+  activeToasts.add(toast);
 
+  // 动画显示
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       toast.classList.add('show');
     });
   });
 
-  setTimeout(() => {
-    toast.classList.remove('show');
-    toast.addEventListener('transitionend', () => {
-      if (toast.parentNode) toast.parentNode.removeChild(toast);
-    }, { once: true });
-  }, 3000);
+  // 自动消失
+  const displayDuration = duration || TOAST_CONFIG.defaultDuration;
+  const timeoutId = setTimeout(() => {
+    dismissToast(toast);
+  }, displayDuration);
+  
+  // 添加点击关闭功能
+  toast.addEventListener('click', () => {
+    clearTimeout(timeoutId);
+    dismissToast(toast);
+  });
 }
 
 // ==================== 模态框系统 ====================
@@ -61,16 +120,38 @@ export function showToast(message, type = 'info') {
 // 存储每个模态框的焦点陷阱清理函数和之前聚焦的元素
 const modalFocusStore = new WeakMap();
 
+// 模态框配置
+const MODAL_CONFIG = {
+  focusableSelectors: [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'textarea:not([disabled])',
+    'select:not([disabled])',
+    '[tabindex]:not([tabindex="-1"])',
+    '[contenteditable]'
+  ]
+};
+
 /**
  * 创建焦点陷阱
  * @param {HTMLElement} modal - 模态框元素
  * @returns {Function} 清理函数
  */
-export function createFocusTrap(modal) {
+function createFocusTrap(modal) {
+  if (!modal) {
+    console.warn('[Modal] Invalid modal element for focus trap');
+    return () => {};
+  }
+
   const focusableElements = modal.querySelectorAll(
-    'a, button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
+    MODAL_CONFIG.focusableSelectors.join(', ')
   );
-  if (focusableElements.length === 0) return () => {};
+  
+  if (focusableElements.length === 0) {
+    console.warn('[Modal] No focusable elements found in modal');
+    return () => {};
+  }
 
   const firstElement = focusableElements[0];
   const lastElement = focusableElements[focusableElements.length - 1];
@@ -88,7 +169,14 @@ export function createFocusTrap(modal) {
   }
 
   modal.addEventListener('keydown', handleTabKey);
-  firstElement?.focus();
+  
+  // 尝试聚焦到第一个元素，失败则聚焦到模态框本身
+  try {
+    firstElement.focus();
+  } catch (e) {
+    modal.setAttribute('tabindex', '-1');
+    modal.focus();
+  }
 
   return () => {
     modal.removeEventListener('keydown', handleTabKey);
@@ -102,14 +190,23 @@ export function createFocusTrap(modal) {
 // 模态框计数器，防止多模态框时提前恢复滚动
 let modalOpenCount = 0;
 
-export function openModal(id) {
+function openModal(id) {
+  if (!id || typeof id !== 'string') {
+    console.warn('[Modal] Invalid modal ID');
+    return;
+  }
+
   const modal = document.getElementById(id);
-  if (!modal) return;
+  if (!modal) {
+    console.warn('[Modal] Modal not found:', id);
+    return;
+  }
 
   // 保存当前焦点元素
   const previousFocus = document.activeElement;
 
   modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
   modalOpenCount++;
   document.body.style.overflow = 'hidden';
 
@@ -130,17 +227,31 @@ export function openModal(id) {
     handleEsc,
     previousFocus
   });
+  
+  // 触发自定义事件
+  modal.dispatchEvent(new CustomEvent('modal:open', { bubbles: true }));
 }
 
 /**
  * 关闭模态框
  * @param {string} id - 模态框 ID
  */
-export function closeModal(id) {
+function closeModal(id) {
+  if (!id || typeof id !== 'string') {
+    console.warn('[Modal] Invalid modal ID');
+    return;
+  }
+
   const modal = document.getElementById(id);
-  if (!modal) return;
+  if (!modal) {
+    console.warn('[Modal] Modal not found:', id);
+    return;
+  }
+
   modal.classList.remove('active');
+  modal.setAttribute('aria-hidden', 'true');
   modalOpenCount = Math.max(0, modalOpenCount - 1);
+  
   if (modalOpenCount === 0) {
     document.body.style.overflow = '';
   }
@@ -154,17 +265,27 @@ export function closeModal(id) {
 
     // 恢复焦点
     if (store.previousFocus && typeof store.previousFocus.focus === 'function') {
-      store.previousFocus.focus();
+      try {
+        store.previousFocus.focus();
+      } catch (e) {
+        console.warn('[Modal] Failed to restore focus:', e);
+      }
     }
   }
+  
+  // 触发自定义事件
+  modal.dispatchEvent(new CustomEvent('modal:close', { bubbles: true }));
 }
 
 /**
  * 关闭所有模态框
  */
-export function closeAllModals() {
-  document.querySelectorAll('.modal-overlay.active').forEach(modal => {
+function closeAllModals() {
+  const activeModals = document.querySelectorAll('.modal-overlay.active');
+  
+  activeModals.forEach(modal => {
     modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
 
     // 清理每个模态框的焦点陷阱和 ESC 监听
     const store = modalFocusStore.get(modal);
@@ -173,12 +294,18 @@ export function closeAllModals() {
       modal.removeEventListener('keydown', store.handleEsc);
       modalFocusStore.delete(modal);
 
-      // 恢复焦点
+      // 恢复焦点到最后一个模态框保存的元素
       if (store.previousFocus && typeof store.previousFocus.focus === 'function') {
-        store.previousFocus.focus();
+        try {
+          store.previousFocus.focus();
+        } catch (e) {
+          // 静默失败
+        }
       }
     }
   });
+  
+  modalOpenCount = 0;
   document.body.style.overflow = '';
 }
 
@@ -188,7 +315,7 @@ export function closeAllModals() {
  * 创建骨架屏卡片
  * @returns {string} HTML 字符串
  */
-export function createSkeletonCard() {
+function createSkeletonCard() {
   return `<div class="model-card skeleton-card" role="status" aria-label="加载中">
     <div class="skeleton" style="height:180px;margin-bottom:1rem;border-radius:8px"></div>
     <div class="skeleton" style="height:24px;width:70%;margin-bottom:0.75rem;border-radius:4px"></div>
@@ -205,7 +332,7 @@ export function createSkeletonCard() {
  * 创建骨架屏统计卡片
  * @returns {string} HTML 字符串
  */
-export function createSkeletonStat() {
+function createSkeletonStat() {
   return `<div class="stat-card skeleton-card" role="status" aria-label="加载中">
     <div class="skeleton" style="height:32px;width:60px;margin-bottom:0.5rem;border-radius:4px"></div>
     <div class="skeleton" style="height:16px;width:80px;border-radius:4px"></div>
@@ -218,7 +345,7 @@ export function createSkeletonStat() {
  * @param {number} [statCount=4] - 统计卡片数量
  * @returns {{cards: string, stats: string, full: string}} 骨架屏 HTML
  */
-export function createSkeletonScreen(modelCount = 6, statCount = 4) {
+function createSkeletonScreen(modelCount = 6, statCount = 4) {
   const cards = Array.from({ length: modelCount }, () => createSkeletonCard()).join('');
   const stats = Array.from({ length: statCount }, () => createSkeletonStat()).join('');
   return {
@@ -233,86 +360,142 @@ export function createSkeletonScreen(modelCount = 6, statCount = 4) {
 
 // ==================== 模型卡片 ====================
 
+// 卡片配置
+const CARD_CONFIG = {
+  maxTags: 4,
+  animationDelay: 0.05,
+  maxDescriptionLength: 200
+};
+
+/**
+ * 安全截断文本
+ * @param {string} text - 原始文本
+ * @param {number} maxLength - 最大长度
+ * @returns {string} 截断后的文本
+ */
+function truncateText(text, maxLength) {
+  if (!text || typeof text !== 'string') return '';
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength - 3) + '...';
+}
+
 /**
  * 创建模型卡片 HTML
  * @param {Object} model - 模型对象
  * @param {Object} [opts={}] - 选项
  * @returns {string} HTML 字符串
  */
-export function createModelCard(model, opts = {}) {
+function createModelCard(model, opts = {}) {
+  // 参数验证
   if (!model || typeof model !== 'object') {
     console.warn('[createModelCard] 无效的模型数据');
     return '';
   }
+  
   const {
     index = 0,
     searchTerm = '',
     isFavorite = false,
     compareEnabled = false,
     compareSelected = false
-  } = opts;
-  const gradient = getCategoryGradient(model.category);
+  } = opts || {};
+  
+  // 提取并验证模型数据
+  const modelName = model.name || '未知模型';
+  const modelCategory = model.category || '未分类';
+  const modelId = model.id || modelName;
+  const modelYear = model.year ? String(model.year) : '';
+  const modelDescription = model.description || model.desc || '';
+  const modelArchitecture = model.architecture || '';
+  const modelParams = model.parameters || model.params || '';
+  
+  // 获取分类渐变（如果函数存在）
+  let gradient = '';
+  try {
+    if (typeof getCategoryGradient === 'function') {
+      gradient = getCategoryGradient(modelCategory);
+    }
+  } catch (e) {
+    console.warn('[createModelCard] 无法获取分类渐变:', e);
+  }
+  
   const favClass = isFavorite ? 'active' : '';
   const selectedClass = compareSelected ? 'compare-selected' : '';
 
-  // 标签截断：最多4个
-  const visibleTags = model.tags ? model.tags.slice(0, 4) : [];
-  const extraTagCount = model.tags && model.tags.length > 4 ? model.tags.length - 4 : 0;
+  // 标签处理
+  const tags = Array.isArray(model.tags) ? model.tags : [];
+  const visibleTags = tags.slice(0, CARD_CONFIG.maxTags);
+  const extraTagCount = Math.max(0, (tags.length || 0) - CARD_CONFIG.maxTags);
 
-  // 搜索高亮扩展
-  const hl = (text) => highlightText(text || '', searchTerm);
+  // 搜索高亮函数（安全处理）
+  const hl = (text) => {
+    try {
+      if (typeof highlightText === 'function') {
+        return highlightText(text || '', searchTerm || '');
+      }
+      return escapeHtml(text || '');
+    } catch (e) {
+      return escapeHtml(text || '');
+    }
+  };
 
-  return `<div class="model-card ${selectedClass}" data-model="${escapeHtml(model.name)}" data-category="${escapeHtml(model.category)}" role="article" aria-label="${escapeHtml(model.name)} 模型卡片" style="animation: fadeInUp 0.4s ease-out ${index * 0.05}s both;">
-    <!-- 对比模式复选框 -->
+  // 安全转义所有动态内容
+  const escapedName = escapeHtml(modelName);
+  const escapedCategory = escapeHtml(modelCategory);
+  const escapedId = escapeHtml(modelId);
+  const escapedYear = modelYear ? escapeHtml(modelYear) : '';
+  const escapedDescription = escapeHtml(truncateText(modelDescription, CARD_CONFIG.maxDescriptionLength));
+  const escapedArchitecture = escapeHtml(modelArchitecture);
+  const escapedParams = escapeHtml(String(modelParams));
+  
+  // 标签安全处理
+  const tagsHtml = visibleTags.length > 0 ? `
+    <div class="model-card-tags">
+      ${visibleTags.map(tag => `<span class="model-card-tag">${hl(tag)}</span>`).join('')}
+      ${extraTagCount > 0 ? `<span class="model-card-tag">+${extraTagCount}</span>` : ''}
+    </div>
+  ` : '';
+
+  // 计算动画延迟
+  const animationDelay = index * CARD_CONFIG.animationDelay;
+
+  return `<div class="model-card ${selectedClass}" data-model="${escapedName}" data-category="${escapedCategory}" role="article" aria-label="${escapedName} 模型卡片" style="animation: fadeInUp 0.4s ease-out ${animationDelay}s both;">
     ${compareEnabled ? `
       <label class="model-card-compare">
-        <input type="checkbox" class="model-card-compare-checkbox" data-model="${escapeHtml(model.name)}" ${compareSelected ? 'checked' : ''} aria-label="选择 ${escapeHtml(model.name)} 进行对比">
+        <input type="checkbox" class="model-card-compare-checkbox" data-model="${escapedName}" ${compareSelected ? 'checked' : ''} aria-label="选择 ${escapedName} 进行对比">
       </label>
     ` : ''}
 
-    <!-- 收藏按钮 - 右上角 -->
-    <button class="model-card-fav ${favClass}" data-model-name="${escapeHtml(model.name)}" aria-pressed="${isFavorite}" aria-label="${isFavorite ? '取消收藏' : '收藏'}">
+    <button class="model-card-fav ${favClass}" data-model-name="${escapedName}" aria-pressed="${isFavorite}" aria-label="${isFavorite ? '取消收藏' : '收藏'}">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
     </button>
 
-    <!-- 图标框 -->
     <div class="model-card-icon">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
     </div>
 
     <div class="model-card-content">
-      <!-- 标题行：名称 + 年份 -->
       <div class="model-card-header">
         <div class="model-card-name-wrap">
-          <h3 class="model-card-name">${hl(model.name)}</h3>
+          <h3 class="model-card-name">${hl(modelName)}</h3>
+          ${escapedYear ? `<span class="model-card-year">${escapedYear}</span>` : ''}
         </div>
-        ${model.year ? `<span class="model-card-year">${escapeHtml(model.year)}</span>` : ''}
       </div>
 
-      <!-- 分类 pill -->
-      ${model.category ? `<span class="model-card-category">${hl(model.category)}</span>` : ''}
+      ${modelCategory && modelCategory !== '未分类' ? `<span class="model-card-category">${hl(modelCategory)}</span>` : ''}
 
-      <!-- 描述 -->
-      <p class="model-card-desc">${hl(model.description || model.desc || '')}</p>
+      <p class="model-card-desc">${hl(escapedDescription)}</p>
 
-      <!-- Meta -->
       <div class="model-card-meta">
-        ${model.architecture ? `<span class="model-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>${hl(model.architecture)}</span>` : ''}
-        ${model.parameters || model.params ? `<span class="model-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>${escapeHtml(model.parameters || model.params)}</span>` : ''}
+        ${escapedArchitecture ? `<span class="model-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>${hl(escapedArchitecture)}</span>` : ''}
+        ${escapedParams ? `<span class="model-card-meta-item"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>${escapedParams}</span>` : ''}
       </div>
 
-      <!-- 标签 -->
-      ${visibleTags.length ? `
-        <div class="model-card-tags">
-          ${visibleTags.map(tag => `<span class="model-card-tag">${hl(tag)}</span>`).join('')}
-          ${extraTagCount > 0 ? `<span class="model-card-tag">+${extraTagCount}</span>` : ''}
-        </div>
-      ` : ''}
+      ${tagsHtml}
 
-      <!-- 底部操作区 -->
       <div class="model-card-footer">
         <span></span>
-        <a class="model-card-view-link" href="javascript:void(0)" onclick="showDetail('${escapeHtml(model.id || model.name)}')">查看详情 →</a>
+        <a class="model-card-view-link" href="javascript:void(0)" onclick="showDetail('${escapedId}')" role="button" tabindex="0" aria-label="查看 ${escapedName} 的详情">查看详情 →</a>
       </div>
     </div>
   </div>`;
@@ -323,17 +506,14 @@ export function createModelCard(model, opts = {}) {
  * @param {string} category - 分类名称
  * @param {number} count - 模型数量
  * @param {string} icon - SVG 图标
- * @param {string} desc - 分类描述
  * @param {number} index - 索引（用于入场动画延迟）
  * @returns {string} HTML 字符串
  */
-export function createCategoryCard(category, count, icon, desc, index) {
-  const descHtml = desc ? `<p class="category-card-desc">${escapeHtml(desc)}</p>` : '';
+function createCategoryCard(category, count, icon, index) {
   return `<div class="category-card" data-category="${escapeHtml(category)}" data-color="${escapeHtml(category)}" role="button" tabindex="0" aria-label="浏览${escapeHtml(category)}分类，共${count}个模型" style="animation: fadeInUp 0.5s ease-out ${index * 0.08}s both;" onmousemove="updateRipple(event, this)">
     <div class="category-card-icon">${icon}</div>
     <div class="category-card-info">
       <h3 class="category-card-name">${escapeHtml(category)}</h3>
-      ${descHtml}
       <p class="category-card-count">${count} 个模型</p>
     </div>
     <button class="category-card-arrow" aria-label="进入分类">
@@ -351,7 +531,7 @@ export function createCategoryCard(category, count, icon, desc, index) {
  * @param {string} icon - SVG 图标
  * @returns {string} HTML 字符串
  */
-export function createStatCard(value, label, icon) {
+function createStatCard(value, label, icon) {
   return `<div class="stat-card">
     <div class="stat-icon">${icon}</div>
     <div class="stat-value">${value}</div>
@@ -426,7 +606,7 @@ function clearSearchHistory() {
  * 创建搜索栏 HTML
  * @returns {string} HTML 字符串
  */
-export function createSearchBar() {
+function createSearchBar() {
   return `<div class="search-bar">
     <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
     <input type="text" class="search-input" placeholder="搜索模型、论文、作者..." aria-label="搜索模型" autocomplete="off" maxlength="100">
@@ -512,7 +692,7 @@ function bindFocusEvents(input, dropdown, container, onFocus, onSearch) {
  * @param {HTMLElement} container - 容器元素
  * @param {Object} [options={}] - 选项
  */
-export function initSearchBar(container, options = {}) {
+function initSearchBar(container, options = {}) {
   if (!container) return;
   const input = container.querySelector('.search-input');
   const clearBtn = container.querySelector('.search-clear');
@@ -543,7 +723,7 @@ export function initSearchBar(container, options = {}) {
  * @param {Object} [options={}] - 选项
  * @returns {string} HTML 字符串
  */
-export function createSearchHistoryDropdown(history, options = {}) {
+function createSearchHistoryDropdown(history, options = {}) {
   if (!history || history.length === 0) return '';
   const { onSelect, onDelete, onClear } = options;
   const deleteIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
@@ -624,7 +804,7 @@ function createRecommendationCards(models) {
  * @param {Array} [models=[]] - 模型数组
  * @returns {string} HTML 字符串
  */
-export function createEmptySearchResult(models = []) {
+function createEmptySearchResult(models = []) {
   const defaultIcon = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
   const recommendationsHtml = createRecommendationCards(models);
   return `<div class="empty-search-result">
@@ -642,7 +822,7 @@ export function createEmptySearchResult(models = []) {
  * @param {string} [icon] - SVG 图标
  * @returns {string} HTML 字符串
  */
-export function createEmptyState(message, icon) {
+function createEmptyState(message, icon) {
   const defaultIcon = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>';
   return `<div class="empty-state" aria-live="polite">
     <div class="empty-state-icon">${icon || defaultIcon}</div>
@@ -658,7 +838,7 @@ export function createEmptyState(message, icon) {
  * @param {string} activeTab - 当前活跃标签
  * @returns {string} HTML 字符串
  */
-export function createTabs(tabs, activeTab) {
+function createTabs(tabs, activeTab) {
   const tabItems = tabs.map(tab =>
     `<button class="tab-btn ${tab.id === activeTab ? 'active' : ''}" data-tab="${tab.id}" role="tab" aria-selected="${tab.id === activeTab}">${tab.label}</button>`
   ).join('');
@@ -675,7 +855,7 @@ export function createTabs(tabs, activeTab) {
  * @param {string} [label] - 标签
  * @returns {string} HTML 字符串
  */
-export function createProgressBar(value, max, label) {
+function createProgressBar(value, max, label) {
   const percent = Math.min((value / max) * 100, 100);
   return `<div class="progress-bar">
     <div class="progress-bar-fill" style="width:${percent}%"></div>
@@ -691,16 +871,125 @@ export function createProgressBar(value, max, label) {
  * @param {string} language - 语言
  * @returns {string} HTML 字符串
  */
-export function createCodeBlock(code, language) {
+function createCodeBlock(code, language) {
+  const highlighted = highlightCode(code, language || 'python');
   return `<div class="code-block">
     <div class="code-block-header">
-      <span class="code-block-lang">${escapeHtml(language || '')}</span>
-      <button class="code-block-copy" aria-label="复制代码">
+      <span class="code-block-lang">${escapeHtml(language || 'python')}</span>
+      <button class="code-block-copy" aria-label="复制代码" data-code="${escapeHtml(code).replace(/"/g, '&quot;')}">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
       </button>
     </div>
-    <pre><code>${escapeHtml(code)}</code></pre>
+    <pre><code>${highlighted}</code></pre>
   </div>`;
+}
+
+// ==================== 语法高亮系统 ====================
+
+const KEYWORDS = {
+  python: ['def', 'class', 'import', 'from', 'return', 'if', 'else', 'elif', 'for', 'while', 'try', 'except', 'finally', 'with', 'as', 'pass', 'break', 'continue', 'and', 'or', 'not', 'in', 'is', 'True', 'False', 'None', 'lambda', 'yield', 'global', 'nonlocal', 'assert', 'raise', 'del', 'async', 'await', 'self', 'print', 'len', 'range', 'list', 'dict', 'set', 'tuple', 'str', 'int', 'float', 'bool', 'type', 'super', 'init', 'new'],
+  javascript: ['function', 'const', 'let', 'var', 'return', 'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue', 'try', 'catch', 'finally', 'throw', 'new', 'this', 'class', 'extends', 'import', 'export', 'default', 'from', 'async', 'await', 'yield', 'typeof', 'instanceof', 'true', 'false', 'null', 'undefined', 'NaN', 'Infinity', 'console', 'log', 'document', 'window'],
+  pytorch: ['nn', 'torch', 'Tensor', 'Module', 'forward', 'backward', 'optim', 'DataLoader', 'Dataset', 'transforms', 'utils', 'autograd', 'F', 'nn', 'functional', 'conv2d', 'linear', 'relu', 'sigmoid', 'tanh', 'softmax', 'dropout', 'batch_norm', 'layer_norm', 'sequential', 'parameter', 'state_dict', 'load_state_dict', 'to', 'cuda', 'cpu', 'train', 'eval', 'zero_grad', 'step', 'backward']
+};
+
+const OPERATORS = /([+\-*/%=<>!&|^~?:]+|\.{3})/;
+const PUNCTUATION = /([{}[\];,])/;
+const NUMBERS = /\b(\d+\.?\d*(?:e[+-]?\d+)?|0x[\da-f]+|0b[01]+|0o[0-7]+)\b/i;
+const STRINGS = /(['"`])(?:(?!\1)[^\\]|\\.)*\1/;
+const COMMENTS = /(#.*$|\/\/.*$|\/\*[\s\S]*?\*\/)/m;
+const FUNCTION_CALL = /\b([a-zA-Z_]\w*)\s*\(/g;
+const CLASS_DEF = /\bclass\s+([A-Z]\w*)/g;
+
+// escapeHtml 在 utils.js 中定义
+
+/**
+ * 语法高亮代码
+ * @param {string} code - 源代码
+ * @param {string} language - 编程语言
+ * @returns {string} HTML 字符串
+ */
+function highlightCode(code, language) {
+  let escaped = escapeHtml(code);
+  
+  escaped = escaped.replace(STRINGS, '<span class="code-string">$&</span>');
+  escaped = escaped.replace(COMMENTS, '<span class="code-comment">$&</span>');
+  escaped = escaped.replace(NUMBERS, '<span class="code-number">$&</span>');
+  
+  const keywords = KEYWORDS[language] || KEYWORDS.python;
+  keywords.forEach(kw => {
+    const regex = new RegExp(`\\b(${kw})\\b`, 'g');
+    escaped = escaped.replace(regex, '<span class="code-keyword">$1</span>');
+  });
+  
+  escaped = escaped.replace(OPERATORS, '<span class="code-operator">$&</span>');
+  escaped = escaped.replace(PUNCTUATION, '<span class="code-punctuation">$&</span>');
+  
+  return escaped;
+}
+
+// ==================== 代码弹窗系统 ====================
+
+let currentCode = '';
+let currentLanguage = 'python';
+
+function showCodeModal(code, title, subtitle, language) {
+  currentCode = code;
+  currentLanguage = language || 'python';
+  
+  const modal = document.getElementById('codeModal');
+  const titleEl = document.getElementById('codeModalTitle');
+  const subtitleEl = document.getElementById('codeModalSubtitle');
+  const contentEl = document.getElementById('codeContent');
+  const lineNumbersEl = document.getElementById('codeLineNumbers');
+  const copyBtn = document.getElementById('codeCopyBtn');
+  
+  if (!modal) return;
+  
+  titleEl.textContent = title || '模块代码';
+  subtitleEl.textContent = subtitle || `语言: ${currentLanguage}`;
+  
+  const highlighted = highlightCode(currentCode, currentLanguage);
+  contentEl.innerHTML = highlighted;
+  
+  const lines = currentCode.split('\n');
+  const lineNumbers = lines.map((_, i) => i + 1).join('\n');
+  lineNumbersEl.textContent = lineNumbers;
+  
+  copyBtn.classList.remove('copied');
+  copyBtn.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+    <span>复制</span>
+  `;
+  
+  openModal('codeModal');
+}
+
+function copyCodeToClipboard() {
+  if (!currentCode) return;
+  
+  navigator.clipboard.writeText(currentCode).then(() => {
+    const copyBtn = document.getElementById('codeCopyBtn');
+    if (copyBtn) {
+      copyBtn.classList.add('copied');
+      copyBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span>已复制</span>
+      `;
+      
+      setTimeout(() => {
+        copyBtn.classList.remove('copied');
+        copyBtn.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          <span>复制</span>
+        `;
+      }, 2000);
+    }
+    
+    showToast('代码已复制到剪贴板', 'success');
+  }).catch(err => {
+    console.error('复制失败:', err);
+    showToast('复制失败，请手动选择代码', 'error');
+  });
 }
 
 // ==================== 对比表格 ====================
@@ -710,7 +999,7 @@ export function createCodeBlock(code, language) {
  * @param {Array} models - 模型数组
  * @returns {string} HTML 字符串
  */
-export function createCompareTable(models) {
+function createCompareTable(models) {
   if (!models || models.length === 0) return '';
 
   const headers = models.map(m => `<th>${escapeHtml(m.name)}</th>`).join('');
@@ -743,7 +1032,7 @@ export function createCompareTable(models) {
  * @param {Object} path - 路径对象
  * @returns {string} HTML 字符串
  */
-export function createPathCard(path) {
+function createPathCard(path) {
   const modelsList = path.models.map(m => `<span class="path-model-tag" data-model="${escapeHtml(m)}">${escapeHtml(m)}</span>`).join('');
   return `<div class="path-card" data-path="${escapeHtml(path.id)}">
     <div class="path-card-header" style="background: ${path.color}">
@@ -766,15 +1055,15 @@ export function createPathCard(path) {
  * @param {boolean} isSelected - 是否选中
  * @returns {string} HTML 字符串
  */
-export function createCompareCard(model, isSelected) {
+function createCompareCard(model, isSelected) {
   return `<div class="compare-select-card ${isSelected ? 'selected' : ''}" data-model="${escapeHtml(model.name)}">
     <div class="compare-select-header">
       <h4>${escapeHtml(model.name)}</h4>
       <span class="compare-select-category">${escapeHtml(model.category)}</span>
     </div>
-    <p class="compare-select-desc">${escapeHtml(model.description || model.desc)}</p>
+    <p class="compare-select-desc">${escapeHtml((model.description || model.desc || ''))}</p>
     <div class="compare-select-meta">
-      ${model.parameters || model.params ? `<span>${escapeHtml(model.parameters || model.params)}</span>` : ''}
+      ${(model.parameters || model.params || '') ? `<span>${escapeHtml((model.parameters || model.params || ''))}</span>` : ''}
       ${model.year ? `<span>${escapeHtml(model.year)}</span>` : ''}
     </div>
   </div>`;
@@ -788,12 +1077,12 @@ export function createCompareCard(model, isSelected) {
  * @param {number} index - 索引
  * @returns {string} HTML 字符串
  */
-export function createAdminTableRow(model, index) {
+function createAdminTableRow(model, index) {
   return `<tr data-index="${index}">
     <td>${escapeHtml(model.name)}</td>
     <td>${escapeHtml(model.category)}</td>
     <td>${escapeHtml(model.year)}</td>
-    <td>${escapeHtml(model.parameters || model.params || '')}</td>
+    <td>${escapeHtml((model.parameters || model.params || '') || '')}</td>
     <td>
       <button class="btn btn-sm btn-primary edit-model-btn" data-index="${index}">编辑</button>
       <button class="btn btn-sm btn-danger delete-model-btn" data-index="${index}">删除</button>
@@ -803,7 +1092,6 @@ export function createAdminTableRow(model, index) {
 
 // ==================== 模型详情页组件 ====================
 
-/**
 /**
  * 获取分类图标
  * @param {string} category - 分类名称
@@ -840,7 +1128,7 @@ function createAccordionSection(title, content, expanded) {
  * @param {Object} model - 模型对象
  * @returns {string} HTML 字符串
  */
-export function createModelDetailHeader(model) {
+function createModelDetailHeader(model) {
   if (!model) return '';
   const escapedName = escapeHtml(model.name);
   const escapedCategory = escapeHtml(model.category);
@@ -867,8 +1155,12 @@ export function createModelDetailHeader(model) {
  * @param {Object} model - 模型对象
  * @returns {string} HTML 字符串
  */
-export function createModelDetailDesc(model) {
-  if (!model) return '';
+function createModelDetailDesc(model) {
+  if (!model) {
+    console.warn('[createModelDetailDesc] 无效的模型对象');
+    return '';
+  }
+  
   const infoItems = [];
   if (model.authors) {
     infoItems.push({ label: '作者', value: model.authors });
@@ -880,13 +1172,13 @@ export function createModelDetailDesc(model) {
     infoItems.push({ label: '架构', value: model.architecture });
   }
   if (model.parameters || model.params) {
-    infoItems.push({ label: '参数量', value: model.parameters || model.params });
+    infoItems.push({ label: '参数量', value: String(model.parameters || model.params) });
   }
   if (model.dataset) {
     infoItems.push({ label: '数据集', value: model.dataset });
   }
   if (model.performance || model.acc) {
-    infoItems.push({ label: '性能', value: model.performance || model.acc });
+    infoItems.push({ label: '性能', value: String(model.performance || model.acc) });
   }
 
   const descContent = (model.description || model.desc)
@@ -1000,7 +1292,7 @@ function handleCardClick(e, callbacks) {
  * @param {HTMLElement} container - 容器元素
  * @param {Object} [callbacks={}] - 回调函数
  */
-export function attachModelCardEvents(container, callbacks = {}) {
+function attachModelCardEvents(container, callbacks = {}) {
   if (!container) return;
 
   // 清理上一次添加的监听器和订阅，防止重复累积
@@ -1030,7 +1322,7 @@ export function attachModelCardEvents(container, callbacks = {}) {
  * @param {HTMLElement} container - 网格容器
  * @param {Object} [callbacks={}] - 回调函数 { onView, onCardClick, onCompareChange, onFavoriteToggle }
  */
-export function setupModelGrid(container, callbacks = {}) {
+function setupModelGrid(container, callbacks = {}) {
   if (!container) return;
 
   // 清理旧监听器
@@ -1111,7 +1403,7 @@ export function setupModelGrid(container, callbacks = {}) {
  * 初始化滚动显示动画
  * @returns {IntersectionObserver} 观察者实例
  */
-export function initScrollAnimations() {
+function initScrollAnimations() {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -1135,7 +1427,7 @@ export function initScrollAnimations() {
  * @param {HTMLElement} container - 容器元素
  * @param {string} [message='加载中...'] - 加载消息
  */
-export function showLoading(container, message = '加载中...') {
+function showLoading(container, message = '加载中...') {
   if (!container) return;
   // 安全：message 已转义，其余为硬编码 HTML
   container.innerHTML = `<div class="loading-state">
@@ -1148,7 +1440,7 @@ export function showLoading(container, message = '加载中...') {
  * 隐藏加载状态
  * @param {HTMLElement} container - 容器元素
  */
-export function hideLoading(container) {
+function hideLoading(container) {
   if (!container) return;
   const loading = container.querySelector('.loading-state');
   if (loading) loading.remove();
