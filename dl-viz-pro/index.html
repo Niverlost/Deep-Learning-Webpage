@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Deep Learning Explorer - 交互式深度学习模型可视化与学习平台，涵盖CNN、Transformer、扩散模型等经典架构">
+  <meta name="theme-color" content="#000000">
+  <!-- Content Security Policy -->
+  <!-- 注意：当前使用内联事件处理器和样式，需要 'unsafe-inline' 支持 -->
+  <!-- 生产环境建议：将内联事件迁移到 addEventListener，内联样式迁移到 CSS 文件，然后移除 'unsafe-inline' -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests; object-src 'none';">
+  <title>Deep Learning Explorer - 深度学习模型可视化平台</title>
+
+  <!-- System font for Apple style (SF Pro on Apple devices, system fonts elsewhere) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 跳过导航链接（无障碍支持） -->
+  <a href="#app" class="skip-link">跳过导航</a>
+
+  <!-- ==================== 顶部导航栏 ==================== -->
+  <header class="header" id="header">
+    <div class="header-inner">
+      <a href="#home" class="logo" aria-label="返回首页">
+        <span class="logo-icon">
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="13" cy="13" r="11" stroke="url(#appleLogoGrad)" stroke-width="1.5"/>
+            <circle cx="9" cy="9" r="2.5" fill="#007AFF"/>
+            <circle cx="17" cy="9" r="2.5" fill="#5AC8FA"/>
+            <circle cx="13" cy="17" r="2.5" fill="#5856D6"/>
+            <line x1="9" y1="11.5" x2="13" y2="14.5" stroke="#007AFF" stroke-width="1.5" stroke-linecap="round"/>
+            <line x1="17" y1="11.5" x2="13" y2="14.5" stroke="#5AC8FA" stroke-width="1.5" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="appleLogoGrad" x1="0" y1="0" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#007AFF"/>
+                <stop offset="1" stop-color="#5856D6"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </span>
+        <span class="logo-text">Deep Learning Explorer</span>
+      </a>
+      <nav class="nav" role="navigation" aria-label="主导航">
+        <button class="nav-btn active" data-view="home" onclick="event.preventDefault(); navigate('home')">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1.5L1 7.5v7h4.5v-4h5v4H15v-7L8 1.5z"/></svg>
+          <span>首页</span>
+        </button>
+        <button class="nav-btn" id="navFavBtn" data-view="favorites" onclick="navigate('favorites')" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 13.5s-5.5-3.5-5.5-7C2.5 4 4.5 2.5 6 2.5c.8 0 1.5.3 2 1 0 0 0 0 0 0 .5-.7 1.2-1 2-1C11.5 2.5 13.5 4 13.5 6.5c0 3.5-5.5 7-5.5 7z"/></svg>
+          <span>收藏</span>
+        </button>
+        <button class="nav-btn" id="navAdminBtn" data-view="admin" onclick="navigate('admin')" style="display:none;">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2.5 2.5 0 012.5 2.5v1h1a.5.5 0 01.5.5v.5h.5a.5.5 0 01.5.5v6a.5.5 0 01-.5.5H2a.5.5 0 01-.5-.5v-6a.5.5 0 01.5-.5h.5v-.5a.5.5 0 01.5-.5h1V3.5A2.5 2.5 0 018 1zm0 1.5a1 1 0 00-1 1v1h2v-1a1 1 0 00-1-1z"/></svg>
+          <span>管理</span>
+        </button>
+        <button class="theme-toggle-btn" id="themeToggle" onclick="toggleTheme()" aria-label="切换主题">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1A.5.5 0 018 1zm0 13a.5.5 0 01.5.5v1a.5.5 0 01-1 0v-1a.5.5 0 01.5-.5zM2 8h1a.5.5 0 010 1H2a.5.5 0 010-1zm11 0h1a.5.5 0 010 1h-1a.5.5 0 010-1zM4.22 3.81a.5.5 0 01.707 0l.7.7a.5.5 0 01-.707.707l-.7-.7a.5.5 0 010-.707zm7.07 8.49a.5.5 0 01.707 0l.7.7a.5.5 0 01-.707.707l-.7-.7a.5.5 0 010-.707zM1 7.5a.5.5 0 01.5-.5h1a.5.5 0 010 1h-1a.5.5 0 01-.5-.5zm13.07-1.07a.5.5 0 01.707 0l.7.7a.5.5 0 01-.707.707l-.7-.7a.5.5 0 010-.707zM5.93 10.93a.5.5 0 010-.707l.7-.7a.5.5 0 11.707.707l-.7.7a.5.5 0 01-.707 0zM8 5.5A2.5 2.5 0 1010.5 8 2.5 2.5 0 008 5.5zm0 1A1.5 1.5 0 119.5 8 1.5 1.5 0 018 6.5z"/></svg>
+        </button>
+        <button class="nav-btn interaction-guide-btn" onclick="showInteractionGuide()" aria-label="交互指南" title="字母小人交互指南">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm1 12H7v-2h2v2zm0-3H7V4h2v5z"/></svg>
+          <span>交互指南</span>
+        </button>
+        <button class="nav-btn" id="navLoginBtn" onclick="showLoginModal()">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a3.5 3.5 0 00-3.5 3.5V6H3a.5.5 0 00-.5.5v5a.5.5 0 00.5.5h10a.5.5 0 00.5-.5v-5A.5.5 0 0013 6h-1.5V4.5A3.5 3.5 0 008 1zm2 5H6V4.5a2 2 0 114 0V6z"/></svg>
+          <span>登录</span>
+        </button>
+        <div class="user-nav" id="userNav">
+          <button class="user-avatar-btn" onclick="toggleUserMenu()" aria-label="用户菜单" aria-expanded="false" aria-haspopup="true">
+            <span class="user-avatar" id="userAvatar">U</span>
+            <span class="user-name" id="userName">User</span>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor" style="flex-shrink:0;"><path d="M3 5l3 3 3-3"/></svg>
+          </button>
+          <div class="user-menu" id="userMenu">
+            <button class="user-menu-item" onclick="navigate('favorites'); toggleUserMenu();">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 12s-4.5-3-4.5-6A3 3 0 017 3a3 3 0 014.5 3C11.5 9 7 12 7 12z"/></svg>
+              我的收藏
+            </button>
+            <div class="user-menu-divider"></div>
+            <button class="user-menu-item danger" onclick="logoutUser(); toggleUserMenu();">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 1H2a1 1 0 00-1 1v10a1 1 0 001 1h3M9 4l3 3-3 3M12 7H5"/></svg>
+              退出登录
+            </button>
+          </div>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ==================== 主内容区域 ==================== -->
+  <!-- 屏幕阅读器通知区域：用于播报视图切换 -->
+  <div id="announcer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+  <main id="app" class="app">
+
+    <!-- ===== 首页视图 ===== -->
+    <section id="homeView" class="view active" aria-label="首页">
+      <!-- Hero 区域 -->
+      <div class="hero">
+        <div class="hero-content">
+          <h1 class="hero-title" style="text-align:center;font-size:clamp(1.5rem,4vw,2.5rem);font-weight:700;color:var(--text-primary);margin-bottom:8px;">Deep Learning Explorer</h1>
+          <p class="hero-subtitle" style="text-align:center;font-size:clamp(0.875rem,2vw,1.125rem);color:var(--text-secondary);margin-bottom:24px;">交互式探索 35+ 经典深度学习模型的架构与原理</p>
+          <!-- 字母小人舞台 -->
+          <div class="letter-stage" id="letterStage">
+            <!-- 由 JS 动态生成字母小人 -->
+          </div>
+          <div class="hero-stats" id="heroStats">
+            <div class="hero-stat">
+              <span class="hero-stat-value" id="statModels">--</span>
+              <span class="hero-stat-label">经典模型</span>
+            </div>
+            <div class="hero-stat-divider"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-value" id="statCategories">--</span>
+              <span class="hero-stat-label">研究领域</span>
+            </div>
+            <div class="hero-stat-divider"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-value" id="statYears">--</span>
+              <span class="hero-stat-label">年跨度</span>
+            </div>
+          </div>
+          <div class="hero-actions">
+            <button class="btn btn-primary" onclick="navigate('learningPath')">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 14l4-4m0 0l4 4M6 10V2m8 0l-4 4m0 0L6 2"/></svg>
+              学习路径
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 分类卡片网格 -->
+      <div class="section">
+        <h2 class="section-title">探索模型分类</h2>
+        <div class="module-grid" id="moduleGrid">
+          <!-- 由 JS 动态渲染 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 分类页视图 ===== -->
+    <section id="categoryView" class="view" aria-label="分类浏览">
+      <div class="container">
+        <!-- 面包屑 -->
+        <nav class="breadcrumb" aria-label="面包屑导航">
+          <a class="breadcrumb-link" href="#home" onclick="event.preventDefault(); navigate('home')">首页</a>
+          <span class="breadcrumb-sep" aria-hidden="true">/</span>
+          <span class="breadcrumb-current" id="breadcrumbCategory"></span>
+        </nav>
+
+        <!-- 搜索与筛选 -->
+        <div class="toolbar">
+          <div class="search-box">
+            <svg class="search-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="8" cy="8" r="5.5"/>
+              <line x1="12.5" y1="12.5" x2="16" y2="16"/>
+            </svg>
+            <input type="text" id="searchInput" placeholder="搜索模型名称、标签、架构..." aria-label="搜索模型">
+          </div>
+          <div class="filter-group" id="filterGroup">
+            <!-- 由 JS 动态渲染年份筛选按钮 -->
+          </div>
+          <button class="nav-btn" id="compareModeBtn" onclick="toggleCompareMode()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="1" width="5" height="5" rx="1"/><rect x="8" y="8" width="5" height="5" rx="1"/><line x1="6" y1="3.5" x2="8" y2="3.5" stroke-dasharray="1 1"/><line x1="3.5" y1="6" x2="3.5" y2="8" stroke-dasharray="1 1"/></svg>
+            <span>对比</span>
+          </button>
+        </div>
+
+        <!-- 模型卡片网格 -->
+        <div class="model-grid" id="modelGrid"></div>
+
+        <!-- 空状态 -->
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
+            <circle cx="20" cy="20" r="14"/>
+            <line x1="30" y1="30" x2="42" y2="42"/>
+            <line x1="14" y1="16" x2="26" y2="16"/>
+            <line x1="20" y1="10" x2="20" y2="22"/>
+          </svg>
+          <p>没有找到匹配的模型</p>
+          <p class="empty-hint">尝试调整搜索关键词或筛选条件</p>
+          <button onclick="clearSearch()" style="margin-top:12px;padding:6px 16px;border:1px solid var(--border-color);border-radius:var(--radius-full);background:transparent;color:var(--text-secondary);cursor:pointer;font-size:0.875rem;transition:all 0.2s;">清除筛选</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 模型详情页视图 ===== -->
+    <section id="modelView" class="view" aria-label="模型详情">
+      <div class="container">
+        <!-- 面包屑 -->
+        <nav class="breadcrumb" aria-label="面包屑导航">
+          <a class="breadcrumb-link" href="#home" onclick="event.preventDefault(); navigate('home')">首页</a>
+          <span class="breadcrumb-sep" aria-hidden="true">/</span>
+          <a class="breadcrumb-link" id="modelBreadcrumbCat" href="#"></a>
+          <span class="breadcrumb-sep" aria-hidden="true">/</span>
+          <span class="breadcrumb-current" id="modelBreadcrumbName"></span>
+        </nav>
+
+        <!-- 模型详情内容 -->
+        <div id="modelPageBody" class="model-page-body">
+          <!-- 由 JS 动态渲染 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 我的收藏视图 ===== -->
+    <section id="favoritesView" class="view" aria-label="我的收藏">
+      <div class="container">
+        <!-- 面包屑 -->
+        <nav class="breadcrumb" aria-label="面包屑导航">
+          <a class="breadcrumb-link" href="#home" onclick="event.preventDefault(); navigate('home')">首页</a>
+          <span class="breadcrumb-sep" aria-hidden="true">/</span>
+          <span class="breadcrumb-current">我的收藏</span>
+        </nav>
+
+        <div class="favorites-header">
+          <h2 class="favorites-title">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor" style="color: var(--danger);"><path d="M10 17.5s-6.5-4-6.5-8.5A4 4 0 0110 5a4 4 0 016.5 4c0 4.5-6.5 8.5-6.5 8.5z"/></svg>
+            我的收藏
+            <span class="favorites-count" id="favCount">0</span>
+          </h2>
+        </div>
+
+        <!-- 收藏模型网格 -->
+        <div class="model-grid" id="favModelGrid"></div>
+
+        <!-- 空状态 -->
+        <div class="fav-empty-state" id="favEmptyState">
+          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M24 42s-14-9-14-19A9 9 0 0124 14a9 9 0 0114 9c0 10-14 19-14 19z"/>
+          </svg>
+          <p>还没有收藏任何模型</p>
+          <p class="fav-empty-hint">浏览模型时点击心形图标即可收藏</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 模型对比视图 ===== -->
+    <section id="compareView" class="view" aria-label="模型对比">
+      <div class="container">
+        <!-- 面包屑 -->
+        <nav class="breadcrumb" aria-label="面包屑导航">
+          <a class="breadcrumb-link" href="#home" onclick="event.preventDefault(); navigate('home')">首页</a>
+          <span class="breadcrumb-sep" aria-hidden="true">/</span>
+          <span class="breadcrumb-current">模型对比</span>
+        </nav>
+        <div id="compareViewBody"></div>
+      </div>
+    </section>
+
+    <!-- ===== 学习路径视图 ===== -->
+    <section id="learningPathView" class="view" aria-label="学习路径">
+      <div class="container">
+        <!-- 面包屑 -->
+        <nav class="breadcrumb" aria-label="面包屑导航">
+          <a class="breadcrumb-link" href="#home" onclick="event.preventDefault(); navigate('home')">首页</a>
+          <span class="breadcrumb-sep" aria-hidden="true">/</span>
+          <span class="breadcrumb-current">学习路径</span>
+        </nav>
+        <div id="learningPathViewBody"></div>
+      </div>
+    </section>
+
+    <!-- ===== 管理后台视图 ===== -->
+    <section id="adminView" class="view" aria-label="管理后台">
+      <div class="container">
+        <div class="admin-header">
+          <h2 class="admin-title">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1a2.5 2.5 0 012.5 2.5v1.25h3.75a1.25 1.25 0 011.25 1.25v1.25H2.5V6a1.25 1.25 0 011.25-1.25H7.5V3.5A2.5 2.5 0 0110 1zm0 2.5a.625.625 0 00-.625.625v1.25h1.25V4.125A.625.625 0 0010 3.5zM3.75 8.75h12.5V17.5a1.25 1.25 0 01-1.25 1.25H5a1.25 1.25 0 01-1.25-1.25V8.75z"/></svg>
+            模型管理
+          </h2>
+          <div class="admin-actions">
+            <button class="btn btn-primary" onclick="showAddForm()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><line x1="7" y1="1" x2="7" y2="13" stroke="currentColor" stroke-width="2"/><line x1="1" y1="7" x2="13" y2="7" stroke="currentColor" stroke-width="2"/></svg>
+              添加模型
+            </button>
+            <button class="btn btn-secondary" onclick="exportData()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 1v8M3 5l4 4 4-4M1 12h12"/></svg>
+              导出 JSON
+            </button>
+            <button class="btn btn-secondary" onclick="showImportDialog()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 9V1M3 5l4-4 4 4M1 12h12"/></svg>
+              导入 JSON
+            </button>
+            <button class="btn btn-danger" onclick="logoutAdmin()">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 1H2a1 1 0 00-1 1v10a1 1 0 001 1h3M9 4l3 3-3 3M12 7H5"/></svg>
+              退出管理
+            </button>
+          </div>
+        </div>
+        <div id="adminTable" class="admin-table-wrapper"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== 模态框 ==================== -->
+
+  <!-- 模型详情模态框 -->
+  <div class="modal-overlay" id="detailModal" role="dialog" aria-modal="true" aria-label="模型详情">
+    <div class="modal-content detail-content">
+      <button class="modal-close" onclick="closeModal('detailModal')" aria-label="关闭">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
+      </button>
+      <div id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- 登录/注册模态框 -->
+  <div class="modal-overlay" id="loginModal" role="dialog" aria-modal="true" aria-label="登录注册">
+    <div class="modal-content login-content">
+      <button class="modal-close" onclick="closeModal('loginModal')" aria-label="关闭">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
+      </button>
+      <div class="login-icon">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="8" y="16" width="24" height="18" rx="2"/>
+          <circle cx="20" cy="12" r="6"/>
+        </svg>
+      </div>
+      <h2 class="login-title">欢迎来到 Deep Learning Explorer</h2>
+      <p class="login-hint">登录以解锁收藏、对比等更多功能</p>
+
+      <!-- 标签切换 -->
+      <div class="auth-tabs" role="tablist">
+        <button class="auth-tab active" id="authTabLogin" role="tab" aria-selected="true" aria-controls="loginPanel" onclick="switchAuthTab('login')">登录</button>
+        <button class="auth-tab" id="authTabRegister" role="tab" aria-selected="false" aria-controls="registerPanel" onclick="switchAuthTab('register')">注册</button>
+        <div class="auth-tab-indicator" id="authTabIndicator"></div>
+      </div>
+
+      <!-- 登录表单 -->
+      <div id="loginPanel" role="tabpanel" aria-labelledby="authTabLogin">
+        <form class="auth-form" id="loginForm" onsubmit="handleLogin(event)">
+          <div class="form-group">
+            <label for="loginUsername">用户名</label>
+            <input type="text" id="loginUsername" placeholder="输入用户名" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">密码</label>
+            <input type="password" id="loginPassword" placeholder="输入密码" required autocomplete="current-password">
+          </div>
+          <p id="loginFormError" class="auth-form-error" role="alert" aria-live="assertive"></p>
+          <button type="submit" class="btn btn-primary btn-block">登录</button>
+        </form>
+      </div>
+
+      <!-- 注册表单 -->
+      <div id="registerPanel" role="tabpanel" aria-labelledby="authTabRegister" style="display:none;">
+        <form class="auth-form" id="registerForm" onsubmit="handleRegister(event)">
+          <div class="form-group">
+            <label for="regUsername">用户名</label>
+            <input type="text" id="regUsername" placeholder="3-20个字符" required autocomplete="username" minlength="3" maxlength="20">
+          </div>
+          <div class="form-group">
+            <label for="regEmail">邮箱</label>
+            <input type="email" id="regEmail" placeholder="your@email.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="regPassword">密码</label>
+            <input type="password" id="regPassword" placeholder="至少6个字符" required autocomplete="new-password" minlength="6" oninput="checkPasswordStrength(this.value)">
+            <div class="password-strength-wrapper">
+              <div class="password-strength-bar">
+                <div class="password-strength" id="passwordStrength"></div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="regConfirmPassword">确认密码</label>
+            <input type="password" id="regConfirmPassword" placeholder="再次输入密码" required autocomplete="new-password">
+          </div>
+          <p id="registerFormError" class="auth-form-error" role="alert" aria-live="assertive"></p>
+          <button type="submit" class="btn btn-primary btn-block">注册</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑/添加模态框 -->
+  <div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-label="编辑模型">
+    <div class="modal-content edit-content">
+      <button class="modal-close" onclick="closeModal('editModal')" aria-label="关闭">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
+      </button>
+      <h2 class="edit-title" id="editTitle">编辑模型</h2>
+      <form id="editForm" onsubmit="saveModel(event)">
+        <input type="hidden" id="editId">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="editName">模型名称 *</label>
+            <input type="text" id="editName" required placeholder="如 ResNet">
+          </div>
+          <div class="form-group">
+            <label for="editFullName">全称</label>
+            <input type="text" id="editFullName" placeholder="论文全称">
+          </div>
+          <div class="form-group">
+            <label for="editYear">发布年份 *</label>
+            <input type="number" id="editYear" required placeholder="如 2015">
+          </div>
+          <div class="form-group">
+            <label for="editAuthor">作者</label>
+            <input type="text" id="editAuthor" placeholder="作者姓名">
+          </div>
+          <div class="form-group">
+            <label for="editOrganization">机构</label>
+            <input type="text" id="editOrganization" placeholder="所属机构">
+          </div>
+          <div class="form-group">
+            <label for="editCategory">类别 *</label>
+            <input type="text" id="editCategory" required placeholder="如 图像分类">
+          </div>
+          <div class="form-group">
+            <label for="editArchitecture">架构类型</label>
+            <input type="text" id="editArchitecture" placeholder="如 CNN">
+          </div>
+          <div class="form-group">
+            <label for="editParameters">参数量</label>
+            <input type="text" id="editParameters" placeholder="如 25.6M">
+          </div>
+          <div class="form-group full-width">
+            <label for="editDescription">简介 *</label>
+            <textarea id="editDescription" rows="3" required placeholder="模型简介描述..."></textarea>
+          </div>
+          <div class="form-group full-width">
+            <label for="editKeyInnovation">核心创新</label>
+            <textarea id="editKeyInnovation" rows="2" placeholder="关键创新点..."></textarea>
+          </div>
+          <div class="form-group">
+            <label for="editDatasets">训练数据集</label>
+            <input type="text" id="editDatasets" placeholder="如 ImageNet">
+          </div>
+          <div class="form-group">
+            <label for="editPerformance">性能指标</label>
+            <input type="text" id="editPerformance" placeholder="如 Top-5 3.57%">
+          </div>
+          <div class="form-group">
+            <label for="editPaperUrl">论文链接</label>
+            <input type="url" id="editPaperUrl" placeholder="https://arxiv.org/...">
+          </div>
+          <div class="form-group">
+            <label for="editCodeUrl">代码链接</label>
+            <input type="url" id="editCodeUrl" placeholder="https://github.com/...">
+          </div>
+          <div class="form-group full-width">
+            <label for="editTags">标签（逗号分隔）</label>
+            <input type="text" id="editTags" placeholder="如 CNN, 残差连接, ImageNet">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('editModal')">取消</button>
+          <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 导入模态框 -->
+  <div class="modal-overlay" id="importModal" role="dialog" aria-modal="true" aria-label="导入数据">
+    <div class="modal-content import-content">
+      <button class="modal-close" onclick="closeModal('importModal')" aria-label="关闭">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
+      </button>
+      <h2 class="import-title">导入 JSON 数据</h2>
+      <p class="import-hint">粘贴 models.json 的内容，将替换当前所有数据</p>
+      <textarea id="importData" rows="12" placeholder='粘贴 JSON 数组...'></textarea>
+      <p id="importError" class="error-msg" style="display:none;" role="alert" aria-live="assertive"></p>
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('importModal')">取消</button>
+        <button class="btn btn-primary" onclick="importData()">导入</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 交互指南弹窗 ==================== -->
+  <div class="modal-overlay" id="interactionGuideModal" role="dialog" aria-modal="true" aria-label="字母小人交互指南">
+    <div class="modal-content interaction-guide-content">
+      <button class="modal-close" onclick="closeModal('interactionGuideModal')" aria-label="关闭">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="4" x2="16" y2="16"/><line x1="16" y1="4" x2="4" y2="16"/></svg>
+      </button>
+      <h2 class="guide-title"><span aria-hidden="true">🎮</span> 字母小人交互指南</h2>
+      <p class="guide-subtitle">探索 "Deep Learning" 字母们的有趣互动！</p>
+      
+      <!-- V7创新：SVG图标系统 -->
+      <svg style="display: none;">
+        <defs>
+          <symbol id="icon-hover" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></symbol>
+          <symbol id="icon-click" viewBox="0 0 24 24"><path fill="currentColor" d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></symbol>
+          <symbol id="icon-near" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17h18v2H3zm0-7h18v5H3zm0-4h18v2H3z"/></symbol>
+          <symbol id="icon-scared" viewBox="0 0 24 24"><path fill="currentColor" d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></symbol>
+          <symbol id="icon-press" viewBox="0 0 24 24"><path fill="currentColor" d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zM16 12h-1v-1h-6v1H8c-1.1 0-2 .9-2 2v4c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-4c0-1.1-.9-2-2-2z"/></symbol>
+          <symbol id="icon-sleep" viewBox="0 0 24 24"><path fill="currentColor" d="M9 21h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.58 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2zM9 9l4.34-4.34L12 10h9v2l-3 7H9V9zM1 9h4v12H1z"/></symbol>
+          <symbol id="icon-yawn" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9c1.38 0 2.5-1.12 2.5-2.5S8.38 6 7 6 4.5 7.12 4.5 8.5 5.62 11 7 11zm10 0c1.38 0 2.5-1.12 2.5-2.5S18.38 6 17 6s-2.5 1.12-2.5 2.5S15.62 11 17 11zm-5 3c-2.33 0-4.31 1.46-5.11 3.5h10.22c-.8-2.04-2.78-3.5-5.11-3.5z"/></symbol>
+          <symbol id="icon-stretch" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4c4.41 0 8 3.59 8 8s-3.59 8-8 8-8-3.59-8-8 3.59-8 8-8m0-2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 13c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/></symbol>
+          <symbol id="icon-zoneout" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9c1.38 0 2.5-1.12 2.5-2.5S8.38 6 7 6 4.5 7.12 4.5 8.5 5.62 11 7 11zm10 0c1.38 0 2.5-1.12 2.5-2.5S18.38 6 17 6s-2.5 1.12-2.5 2.5S15.62 11 17 11zm-5 3c-2.33 0-4.31 1.46-5.11 3.5h10.22c-.8-2.04-2.78-3.5-5.11-3.5z"/></symbol>
+          <symbol id="icon-peek" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+          <symbol id="icon-rubeyes" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+          <symbol id="icon-whisper" viewBox="0 0 24 24"><path fill="currentColor" d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></symbol>
+          <symbol id="icon-eyecontact" viewBox="0 0 24 24"><path fill="currentColor" d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></symbol>
+          <symbol id="icon-snake" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/></symbol>
+          <symbol id="icon-celebrate" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-2-5.5l2.5-4.5 2.5 4.5H10zm5 0l2.5-4.5 2.5 4.5H15z"/></symbol>
+        </defs>
+      </svg>
+
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <h3>鼠标交互</h3>
+          <label class="ios-toggle" title="总开关：鼠标交互">
+            <input type="checkbox" class="ios-toggle-input" data-setting="mouseInteractions" checked role="switch" aria-checked="true" aria-label="鼠标交互总开关" tabindex="0">
+            <span class="ios-toggle-slider"></span>
+          </label>
+        </div>
+        <div class="guide-grid">
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-hover"/></svg>
+            <div class="guide-text">
+              <strong>悬停</strong>
+              <p>字母开心弹跳，眼睛眯成月牙</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="悬停">
+              <input type="checkbox" class="ios-toggle-input" data-setting="hover" checked role="switch" aria-checked="true" aria-label="悬停交互开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-click"/></svg>
+            <div class="guide-text">
+              <strong>点击</strong>
+              <p>其他字母转头看向被点击者</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="点击注视">
+              <input type="checkbox" class="ios-toggle-input" data-setting="clickGaze" checked role="switch" aria-checked="true" aria-label="点击注视开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-near"/></svg>
+            <div class="guide-text">
+              <strong>靠近</strong>
+              <p>字母好奇踮脚，身体微微前倾</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="靠近反应">
+              <input type="checkbox" class="ios-toggle-input" data-setting="bodyReaction" checked role="switch" aria-checked="true" aria-label="靠近反应开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-scared"/></svg>
+            <div class="guide-text">
+              <strong>非常近</strong>
+              <p>字母被吓到，向后弹跳</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="吓退弹跳">
+              <input type="checkbox" class="ios-toggle-input" data-setting="scaredBounce" checked role="switch" aria-checked="true" aria-label="吓退弹跳开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-press"/></svg>
+            <div class="guide-text">
+              <strong>按住</strong>
+              <p>字母被压扁，松开弹回</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="按住压扁">
+              <input type="checkbox" class="ios-toggle-input" data-setting="squashStretch" checked role="switch" aria-checked="true" aria-label="按住压扁开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <h3><span aria-hidden="true">😴</span> 偷懒动作（无交互时随机触发）</h3>
+          <label class="ios-toggle" title="总开关：偷懒动作">
+            <input type="checkbox" class="ios-toggle-input" data-setting="lazyActions" checked role="switch" aria-checked="true" aria-label="偷懒动作总开关" tabindex="0">
+            <span class="ios-toggle-slider"></span>
+          </label>
+        </div>
+        <div class="guide-grid">
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-sleep"/></svg>
+            <div class="guide-text">
+              <strong>打瞌睡</strong>
+              <p>眼睛半闭，头一点一点</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="打瞌睡">
+              <input type="checkbox" class="ios-toggle-input" data-setting="lazyNodOff" checked role="switch" aria-checked="true" aria-label="打瞌睡开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-yawn"/></svg>
+            <div class="guide-text">
+              <strong>打哈欠</strong>
+              <p>嘴巴张大，眼角泛泪</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="打哈欠">
+              <input type="checkbox" class="ios-toggle-input" data-setting="lazyYawn" checked role="switch" aria-checked="true" aria-label="打哈欠开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-stretch"/></svg>
+            <div class="guide-text">
+              <strong>伸懒腰</strong>
+              <p>身体拉长，手臂上举</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="伸懒腰">
+              <input type="checkbox" class="ios-toggle-input" data-setting="lazyStretch" checked role="switch" aria-checked="true" aria-label="伸懒腰开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-zoneout"/></svg>
+            <div class="guide-text">
+              <strong>走神发呆</strong>
+              <p>眼睛茫然，嘴巴微张</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="走神发呆">
+              <input type="checkbox" class="ios-toggle-input" data-setting="lazyZoneOut" checked role="switch" aria-checked="true" aria-label="走神发呆开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-peek"/></svg>
+            <div class="guide-text">
+              <strong>偷看别处</strong>
+              <p>眼神悄悄瞟向别处</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="偷看别处">
+              <input type="checkbox" class="ios-toggle-input" data-setting="lazyPeek" checked role="switch" aria-checked="true" aria-label="偷看别处开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-rubeyes"/></svg>
+            <div class="guide-text">
+              <strong>揉眼睛</strong>
+              <p>苏醒后揉眼放松</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="揉眼睛">
+              <input type="checkbox" class="ios-toggle-input" data-setting="lazyRubEyes" checked role="switch" aria-checked="true" aria-label="揉眼睛开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <h3><span aria-hidden="true">👥</span> 社交互动（自动触发）</h3>
+          <label class="ios-toggle" title="总开关：社交互动">
+            <input type="checkbox" class="ios-toggle-input" data-setting="socialInteractions" checked role="switch" aria-checked="true" aria-label="社交互动总开关" tabindex="0">
+            <span class="ios-toggle-slider"></span>
+          </label>
+        </div>
+        <div class="guide-grid">
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-whisper"/></svg>
+            <div class="guide-text">
+              <strong>窃窃私语</strong>
+              <p>相邻字母凑近聊天</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="窃窃私语">
+              <input type="checkbox" class="ios-toggle-input" data-setting="socialWhisper" checked role="switch" aria-checked="true" aria-label="窃窃私语开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-eyecontact"/></svg>
+            <div class="guide-text">
+              <strong>传递眼神</strong>
+              <p>A看B，B回看A</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="传递眼神">
+              <input type="checkbox" class="ios-toggle-input" data-setting="socialEyeContact" checked role="switch" aria-checked="true" aria-label="传递眼神开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-snake"/></svg>
+            <div class="guide-text">
+              <strong>排队跟随</strong>
+              <p>快速移动鼠标，字母像贪吃蛇跟随</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="排队跟随">
+              <input type="checkbox" class="ios-toggle-input" data-setting="snakeFollow" checked role="switch" aria-checked="true" aria-label="排队跟随开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-celebrate"/></svg>
+            <div class="guide-text">
+              <strong>庆祝跳跃</strong>
+              <p>所有字母一起蹦跳</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="庆祝跳跃">
+              <input type="checkbox" class="ios-toggle-input" data-setting="socialCelebrate" checked role="switch" aria-checked="true" aria-label="庆祝跳跃开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="guide-section">
+        <h3><span aria-hidden="true">✨</span> 每个字母的独特性格</h3>
+        <div class="guide-personalities">
+          <span class="personality-tag" style="--color:#58CC02">D 领袖</span>
+          <span class="personality-tag" style="--color:#FF9600">e 圆滚</span>
+          <span class="personality-tag" style="--color:#FF4B4B">e2 可爱</span>
+          <span class="personality-tag" style="--color:#CE82FF">p 芭蕾</span>
+          <span class="personality-tag" style="--color:#1CB0F6">L 稳重</span>
+          <span class="personality-tag" style="--color:#00CD7B">e3 活泼</span>
+          <span class="personality-tag" style="--color:#FFC800">a 开心</span>
+          <span class="personality-tag" style="--color:#FF4B4B">r 抖动</span>
+          <span class="personality-tag" style="--color:#7C4DFF">n 酷</span>
+          <span class="personality-tag" style="--color:#00BFA5">i 优雅</span>
+          <span class="personality-tag" style="--color:#A56E3E">n2 沉稳</span>
+          <span class="personality-tag" style="--color:#CE82FF">g 神秘</span>
+        </div>
+      </div>
+      
+      <p class="guide-tip"><span aria-hidden="true">💡</span> 提示：移动鼠标可以唤醒偷懒中的字母</p>
+    </div>
+  </div>
+
+  <!-- ==================== 对比底部栏 ==================== -->
+  <div class="compare-bar" id="compareBar">
+    <div class="compare-bar-info">
+      <span>已选择 <span class="compare-bar-count" id="compareBarCount">0</span> 个模型</span>
+      <span class="compare-bar-models" id="compareBarModels"></span>
+    </div>
+    <div class="compare-bar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="compareState.selected=[]; updateCompareUI();">清空</button>
+      <button class="btn btn-primary btn-sm" onclick="showCompare()">开始对比</button>
+    </div>
+  </div>
+
+  <!-- ==================== Toast 提示 ==================== -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- ==================== 骨架屏 ==================== -->
+  <div class="skeleton-overlay" id="skeletonOverlay" style="display:none;">
+    <div class="skeleton-hero">
+      <div class="skeleton-line skeleton-line-lg"></div>
+      <div class="skeleton-line skeleton-line-md"></div>
+      <div class="skeleton-line skeleton-line-sm"></div>
+    </div>
+    <div class="skeleton-grid">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+  </div>
+
+  <!-- ==================== 紧急调试工具 ==================== -->
+  <script>
+    // 紧急调试：如果 URL 包含 ?clear=true，清除所有缓存
+    if (new URLSearchParams(location.search).get('clear') === 'true') {
+      localStorage.clear();
+      console.log('[Emergency] 已清除所有 localStorage 缓存');
+      alert('缓存已清除，页面将刷新');
+      location.href = location.pathname;
+    }
+  </script>
+
+  <!-- ==================== 脚本 ==================== -->
+  <script src="viz-configs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

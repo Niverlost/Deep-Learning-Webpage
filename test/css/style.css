@@ -159,7 +159,7 @@
 [data-theme="light"] .hero-stats::before {
   background: radial-gradient(
     400px circle at var(--tilt-x, 50%) var(--tilt-y, 50%),
-    rgba(0, 0, 0, 0.02) 0%,
+    rgba(0, 122, 255, 0.04) 0%,
     transparent 60%
   );
 }
@@ -167,7 +167,7 @@
 [data-theme="light"] .hero-stats.stripe-glow::before {
   background: radial-gradient(
     300px circle at var(--tilt-x, 50%) var(--tilt-y, 50%),
-    rgba(0, 0, 0, 0.04) 0%,
+    rgba(0, 100, 220, 0.08) 0%,
     transparent 60%
   );
 }
@@ -177,7 +177,7 @@
 }
 
 [data-theme="light"] .hero-stat-value {
-  background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  background: linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -1702,8 +1702,8 @@ pre {
   height: 600px;
   border-radius: 50%;
   background: radial-gradient(circle,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.02) 35%,
+    rgba(0, 122, 255, 0.10) 0%,
+    rgba(88, 86, 214, 0.05) 35%,
     transparent 65%);
   transform: translate(-50%, -50%);
   left: var(--spotlight-x, 50%);
@@ -1730,7 +1730,7 @@ pre {
   position: absolute;
   inset: -2px;
   border-radius: calc(var(--radius-xl) + 2px);
-  background: conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.3) 15%, transparent 30%);
+  background: conic-gradient(from 0deg, transparent 0%, var(--accent-primary) 15%, transparent 30%);
   animation: border-beam-rotate 2s linear infinite;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -1785,7 +1785,7 @@ pre {
 }
 
 .hero-beam path {
-  stroke: var(--text-muted);
+  stroke: var(--accent-primary);
   stroke-width: 1.5;
   fill: none;
   stroke-dasharray: 8 4;
@@ -1800,8 +1800,8 @@ pre {
 /* Light theme 适配 */
 [data-theme="light"] .hero-spotlight::before {
   background: radial-gradient(circle,
-    rgba(0, 0, 0, 0.03) 0%,
-    rgba(0, 0, 0, 0.01) 35%,
+    rgba(0, 100, 220, 0.06) 0%,
+    rgba(88, 86, 214, 0.03) 35%,
     transparent 65%);
 }
 
@@ -1819,7 +1819,7 @@ pre {
 }
 
 [data-theme="light"] .hero-beam path {
-  stroke: var(--text-muted);
+  stroke: var(--accent-primary);
 }
 
 /* ==================== Hero Title Hover ==================== */
@@ -1896,7 +1896,6 @@ pre {
   overflow: hidden;
 }
 
-/* Apple Liquid Glass: 移除蓝色追光，保持纯净 */
 .hero-stats::before {
   content: '';
   position: absolute;
@@ -1904,7 +1903,7 @@ pre {
   border-radius: inherit;
   background: radial-gradient(
     400px circle at var(--tilt-x, 50%) var(--tilt-y, 50%),
-    rgba(255, 255, 255, 0.03) 0%,
+    rgba(0, 122, 255, 0.06) 0%,
     transparent 60%
   );
   opacity: 0;
@@ -1920,7 +1919,7 @@ pre {
 .hero-stats.stripe-glow::before {
   background: radial-gradient(
     300px circle at var(--tilt-x, 50%) var(--tilt-y, 50%),
-    rgba(255, 255, 255, 0.06) 0%,
+    rgba(0, 122, 255, 0.12) 0%,
     transparent 60%
   );
 }
@@ -1947,7 +1946,7 @@ pre {
   font-size: 2.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
-  background: linear-gradient(180deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+  background: linear-gradient(180deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

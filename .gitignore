@@ -1,0 +1,10 @@
+# IDE / Editor
+.claude/
+.trae/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
