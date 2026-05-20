@@ -630,3 +630,45 @@ var TEST_MODELS = [
     "tags": ["多模态", "对比学习", "零样本", "视觉-语言", "迁移学习"]
   }
 ];
+
+// ============================================================
+// 本地代码文件路径映射表
+// 用于前端加载专业版/教程版代码文件
+// ============================================================
+var MODEL_CODE_FILES = {
+  "BP": { paper: "backpropagation_paper.py", tutorial: "backpropagation_tutorial.py" },
+  "LeNet-5": { paper: "lenet5_paper.py", tutorial: "lenet5_tutorial.py" },
+  "AlexNet": { paper: "alexnet_paper.py", tutorial: "alexnet_tutorial.py" },
+  "ZFNet": { paper: "zfnet_paper.py", tutorial: "zfnet_tutorial.py" },
+  "VGGNet": { paper: "vgg16_paper.py", tutorial: "vgg16_tutorial.py" },
+  "GoogLeNet": { paper: "googlenet_paper.py", tutorial: "googlenet_tutorial.py" },
+  "ResNet": { paper: "resnet50_paper.py", tutorial: "resnet50_tutorial.py" },
+  "YOLO": { paper: "yolov1_paper.py", tutorial: "yolov1_tutorial.py" },
+  "DenseNet": { paper: "densenet121_paper.py", tutorial: "densenet121_tutorial.py" },
+  "SENet": { paper: "senet_paper.py", tutorial: "senet_tutorial.py" },
+  "MobileNetV1": { paper: "mobilenetv1_paper.py", tutorial: "mobilenetv1_tutorial.py" },
+  "Transformer": { paper: "transformer_paper.py", tutorial: "transformer_tutorial.py" },
+  "BERT": { paper: "bert_paper.py", tutorial: "bert_tutorial.py" },
+  "EfficientNet": { paper: "efficientnetb0_paper.py", tutorial: "efficientnetb0_tutorial.py" },
+  "ViT": { paper: "vit_paper.py", tutorial: "vit_tutorial.py" },
+  "Stable Diffusion": { paper: "stable_diffusion_paper.py", tutorial: "stable_diffusion_tutorial.py" },
+  "ConvNeXt": { paper: "convnext_tiny_paper.py", tutorial: "convnext_tiny_tutorial.py" },
+  "GPT-4": { paper: "gpt4_paper.py", tutorial: "gpt4_tutorial.py" },
+  "YOLOv8": { paper: "yolov8n_paper.py", tutorial: "yolov8n_tutorial.py" },
+  "Faster R-CNN": { paper: "fasterrcnn_paper.py", tutorial: "fasterrcnn_tutorial.py" },
+  "Mask R-CNN": { paper: "maskrcnn_paper.py", tutorial: "maskrcnn_tutorial.py" },
+  "SSD": { paper: "ssd300_paper.py", tutorial: "ssd300_tutorial.py" },
+  "RetinaNet": { paper: "retinanet_paper.py", tutorial: "retinanet_tutorial.py" },
+  "FCN": { paper: "fcn8s_paper.py", tutorial: "fcn8s_tutorial.py" },
+  "U-Net": { paper: "unet_paper.py", tutorial: "unet_tutorial.py" },
+  "DeepLab v3+": { paper: "deeplabv3plus_paper.py", tutorial: "deeplabv3plus_tutorial.py" },
+  "LSTM": { paper: "lstm_paper.py", tutorial: "lstm_tutorial.py" },
+  "GRU": { paper: "gru_paper.py", tutorial: "gru_tutorial.py" },
+  "GPT-2": { paper: "gpt2_paper.py", tutorial: "gpt2_tutorial.py" },
+  "T5": { paper: "t5_paper.py", tutorial: "t5_tutorial.py" },
+  "YOLOv3": { paper: "yolov3_paper.py", tutorial: "yolov3_tutorial.py" },
+  "YOLOv5": { paper: "yolov5s_paper.py", tutorial: "yolov5s_tutorial.py" },
+  "Swin Transformer": { paper: "swin_tiny_paper.py", tutorial: "swin_tiny_tutorial.py" },
+  "DeiT": { paper: "deit_paper.py", tutorial: "deit_tutorial.py" },
+  "CLIP": { paper: "clip_paper.py", tutorial: "clip_tutorial.py" }
+};

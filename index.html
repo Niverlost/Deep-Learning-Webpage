@@ -21,15 +21,15 @@
     })();
   </script>
 
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; form-action 'self'; object-src 'none';">
+  <!-- test目录用于本地测试，不启用CSP防护，确保直接双击index.html即可查看效果 -->
   <title>Deep-Learning-Webpage</title>
 
-  <!-- GitHub Pages 路径基准 -->
-  <base href="/Deep-Learning-Webpage/">
+  <!-- test目录：移除<base>标签，确保本地直接双击打开时路径正确 -->
 
 
 
   <link rel="stylesheet" href="css/style.css">
+  <!-- test目录：CSS在css/子目录中 -->
 </head>
 <body>
   <!-- 骨架屏：首屏加载期间显示 -->
@@ -146,7 +146,7 @@
       <div class="hero">
         <div class="hero-content">
           <h1 class="hero-title" style="text-align:center;font-size:clamp(2rem,5vw,3.5rem);font-weight:700;color:var(--text-primary);margin-bottom:8px;">Deep-Learning-Webpage</h1>
-          <p class="hero-subtitle" style="text-align:center;font-size:clamp(0.875rem,2vw,1.125rem);color:var(--text-secondary);margin-bottom:40px;">交互式探索 35+ 经典深度学习模型的架构与原理</p>
+          <p style="text-align:center;font-size:clamp(0.875rem,2vw,1.125rem);color:var(--text-secondary);margin-bottom:40px;">深度学习网页</p>
           <!-- 字母小人舞台 -->
           <div class="letter-stage" id="letterStage">
             <!-- 由 JS 动态生成字母小人 -->
@@ -913,6 +913,7 @@
     }
   });
   </script>
+  <!-- test目录：使用普通script标签而非ES6模块，确保本地直接打开可用 -->
   <script src="js/utils.js"></script>
   <script src="js/state.js"></script>
   <script src="js/auth.js"></script>

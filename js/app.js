@@ -588,18 +588,30 @@ function renderVizPage(m, vizConfig, container, modeToggleHtml) {
         <p id="vizLayerInfoDesc"></p>
       </div>
 
-      <div class="viz-code-panel">
+      <div class="viz-code-panel" id="vizCodePanel">
         <div class="viz-code-header">
           <h3>代码实现</h3>
-          <span class="viz-code-lang">PyTorch</span>
+          <div class="viz-code-controls">
+            <div class="code-version-toggle">
+              <button class="version-btn active" id="btnPaperVersion" onclick="switchCodeVersion('paper')">专业版</button>
+              <button class="version-btn" id="btnTutorialVersion" onclick="switchCodeVersion('tutorial')">教程版</button>
+            </div>
+            <span class="viz-code-lang">PyTorch</span>
+          </div>
         </div>
-        <button class="code-copy-btn" onclick="copyCode()">复制代码</button>
+        <div class="viz-code-toolbar">
+          <button class="code-copy-btn" onclick="copyCode()">复制代码</button>
+          <button class="code-download-btn" id="codeDownloadBtn" onclick="downloadCurrentCode()">下载代码</button>
+        </div>
         <div class="viz-code-body">
-          <pre id="vizCodeBlock"></pre>
+          <pre id="vizCodeBlock"><div class="code-loading">正在加载代码...</div></pre>
         </div>
       </div>
     </div>
   `;
+
+  // 加载本地代码文件
+  loadModelCode(m.name);
 
   if (vizConfig.type === 'mlp') {
     renderMLPNetwork(vizConfig);
@@ -649,15 +661,40 @@ function renderInfoPage(m, container, modeToggleHtml) {
       </div>
     </div>
 
-    ${(m.paperUrl || m.codeUrl) ? `
     <div class="model-page-section">
-      <h2>参考链接</h2>
-      <div class="model-page-links">
-        ${m.paperUrl ? `<a href="${escapeHtml(m.paperUrl)}" target="_blank" rel="noopener">论文</a>` : ''}
-        ${m.codeUrl ? `<a href="${escapeHtml(m.codeUrl)}" target="_blank" rel="noopener">代码</a>` : ''}
+      <h2>参考资源</h2>
+      <div class="model-page-resource-grid">
+        ${m.paperUrl ? `
+        <div class="resource-card">
+          <div class="resource-icon">📄</div>
+          <div class="resource-info">
+            <h4>论文原文</h4>
+            <p>查看或下载论文PDF</p>
+          </div>
+          <a href="${escapeHtml(m.paperUrl)}" target="_blank" rel="noopener" class="btn btn-secondary">查看论文</a>
+        </div>
+        ` : ''}
+        ${(typeof MODEL_CODE_FILES !== 'undefined' && MODEL_CODE_FILES[m.name]) ? `
+        <div class="resource-card">
+          <div class="resource-icon">💻</div>
+          <div class="resource-info">
+            <h4>代码实现</h4>
+            <p>专业版 + 教程版</p>
+          </div>
+          <button class="btn btn-primary" onclick="navigate('model', {name: '${escapeHtml(m.name).replace(/'/g, "\\'")}'})"">查看代码 →</button>
+        </div>
+        ` : (m.codeUrl ? `
+        <div class="resource-card">
+          <div class="resource-icon">💻</div>
+          <div class="resource-info">
+            <h4>代码实现</h4>
+            <p>外部参考实现</p>
+          </div>
+          <a href="${escapeHtml(m.codeUrl)}" target="_blank" rel="noopener" class="btn btn-secondary">查看代码</a>
+        </div>
+        ` : '')}
       </div>
     </div>
-    ` : ''}
 
     ${m.tags && m.tags.length ? `
     <div class="model-page-section">
@@ -672,6 +709,124 @@ function renderInfoPage(m, container, modeToggleHtml) {
       <p>交互式可视化正在建设中，敬请期待...</p>
     </div>
   `;
+}
+
+// ============================================================
+// 本地代码加载、切换和下载功能
+// ============================================================
+
+var _currentCodeModel = null;
+var _currentCodeVersion = 'paper';
+var _currentCodeContent = '';
+var _currentCodeFileName = '';
+
+/** 加载模型代码文件 */
+function loadModelCode(modelName) {
+  _currentCodeModel = modelName;
+  _currentCodeVersion = 'paper';
+
+  if (typeof MODEL_CODE_FILES === 'undefined') {
+    showCodeLoadError('代码映射表未加载');
+    return;
+  }
+
+  var codeFiles = MODEL_CODE_FILES[modelName];
+  if (!codeFiles) {
+    showCodeLoadError('暂无本地代码实现');
+    return;
+  }
+
+  fetchCodeFile(codeFiles.paper, 'paper');
+}
+
+/** 获取代码文件 */
+function fetchCodeFile(filename, version) {
+  var codeBlock = document.getElementById('vizCodeBlock');
+  if (codeBlock) {
+    codeBlock.innerHTML = '<div class="code-loading">正在加载代码...</div>';
+  }
+
+  fetch('assets/models/' + filename)
+    .then(function(response) {
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status);
+      }
+      return response.text();
+    })
+    .then(function(code) {
+      _currentCodeContent = code;
+      _currentCodeFileName = filename;
+      _currentCodeVersion = version;
+      displayCode(code);
+    })
+    .catch(function(err) {
+      showCodeLoadError('加载失败: ' + err.message);
+    });
+}
+
+/** 显示代码 */
+function displayCode(code) {
+  var codeBlock = document.getElementById('vizCodeBlock');
+  if (!codeBlock) return;
+
+  if (typeof escapeCodeHtml === 'function' && typeof highlightSyntax === 'function') {
+    codeBlock.innerHTML = highlightSyntax(escapeCodeHtml(code));
+  } else {
+    codeBlock.textContent = code;
+  }
+}
+
+/** 显示加载错误 */
+function showCodeLoadError(msg) {
+  var codeBlock = document.getElementById('vizCodeBlock');
+  if (codeBlock) {
+    codeBlock.innerHTML = '<div class="code-error">' + msg + '</div>';
+  }
+}
+
+/** 切换代码版本 (paper / tutorial) */
+function switchCodeVersion(version) {
+  if (!_currentCodeModel || version === _currentCodeVersion) return;
+
+  var codeFiles = MODEL_CODE_FILES[_currentCodeModel];
+  if (!codeFiles) return;
+
+  var filename = version === 'tutorial' ? codeFiles.tutorial : codeFiles.paper;
+
+  // 更新按钮状态
+  var btnPaper = document.getElementById('btnPaperVersion');
+  var btnTutorial = document.getElementById('btnTutorialVersion');
+  if (btnPaper && btnTutorial) {
+    if (version === 'paper') {
+      btnPaper.classList.add('active');
+      btnTutorial.classList.remove('active');
+    } else {
+      btnPaper.classList.remove('active');
+      btnTutorial.classList.add('active');
+    }
+  }
+
+  fetchCodeFile(filename, version);
+}
+
+/** 下载当前显示的代码 */
+function downloadCurrentCode() {
+  if (!_currentCodeContent || !_currentCodeFileName) {
+    showToast('没有可下载的代码', 'error');
+    return;
+  }
+
+  var blob = new Blob([_currentCodeContent], { type: 'text/x-python' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = _currentCodeFileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('代码已下载: ' + _currentCodeFileName, 'success');
 }
 
 /** 复制代码到剪贴板 */

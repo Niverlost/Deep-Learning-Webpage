@@ -4518,12 +4518,18 @@ mark.search-highlight {
 .code-op { color: var(--layer-pool); }
 .code-self { color: var(--layer-attention); }
 
-/* Code Copy Button */
-.code-copy-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 8px 14px;
+/* Code Toolbar */
+.viz-code-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+
+.code-copy-btn,
+.code-download-btn {
+  padding: 6px 14px;
   background: var(--accent-light);
   color: var(--accent-primary);
   border: none;
@@ -4531,19 +4537,14 @@ mark.search-highlight {
   font-size: 0.8125rem;
   font-family: var(--font-body);
   cursor: pointer;
-  opacity: 0;
-  transition: opacity var(--duration-fast) ease, background var(--duration-fast) ease, color var(--duration-fast) ease;
-  z-index: 5;
+  transition: background var(--duration-fast) ease, color var(--duration-fast) ease;
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.viz-code-panel:hover .code-copy-btn {
-  opacity: 1;
-}
-
-.code-copy-btn:hover {
+.code-copy-btn:hover,
+.code-download-btn:hover {
   background: var(--accent-primary);
   color: #fff;
 }
@@ -4551,6 +4552,109 @@ mark.search-highlight {
 .code-copy-btn.copied {
   background: var(--success);
   color: #fff;
+}
+
+/* Code Version Toggle */
+.viz-code-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.code-version-toggle {
+  display: flex;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+
+.version-btn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-family: var(--font-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--duration-fast) ease;
+}
+
+.version-btn:hover {
+  color: var(--text-primary);
+}
+
+.version-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+}
+
+/* Code Loading & Error States */
+.code-loading,
+.code-error {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+.code-error {
+  color: var(--danger);
+}
+
+/* Resource Cards */
+.model-page-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.resource-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-fast) ease;
+}
+
+.resource-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--accent-primary);
+}
+
+.resource-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.resource-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-info h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+}
+
+.resource-info p {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.resource-card .btn {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  font-size: 0.8125rem;
 }
 
 /* ==================== 21.5 Model Viz Page Responsive ==================== */
