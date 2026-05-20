@@ -1103,27 +1103,6 @@ function getCategoryIcon(category) {
 }
 
 /**
- * 创建手风琴折叠面板
- * @param {string} title - 标题
- * @param {string} content - 内容 HTML
- * @param {boolean} expanded - 是否默认展开
- * @returns {string} HTML 字符串
- */
-function createAccordionSection(title, content, expanded) {
-  return `
-    <div class="accordion-section" aria-expanded="${expanded ? 'true' : 'false'}">
-      <div class="accordion-header" role="button" tabindex="0" aria-expanded="${expanded ? 'true' : 'false'}">
-        <span>${title}</span>
-        <svg class="accordion-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l6 6-6 6"/></svg>
-      </div>
-      <div class="accordion-body">
-        <div class="accordion-body-inner">${content}</div>
-      </div>
-    </div>
-  `;
-}
-
-/**
  * 创建模型详情头部
  * @param {Object} model - 模型对象
  * @returns {string} HTML 字符串
@@ -1211,21 +1190,38 @@ function createModelDetailDesc(model) {
     ? `<a href="${escapeHtml(paperUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">论文链接</a>`
     : '';
 
-  const accordionIntro = createAccordionSection('简介', descContent, true);
-  const accordionInnovation = createAccordionSection('核心创新', innovationContent, false);
-  const accordionDetails = createAccordionSection('详细信息', `
-    ${infoGridHtml}
-    ${tagsHtml}
-    <div class="detail-actions">
-      ${paperHtml}
+  const introSection = descContent ? `
+    <div class="detail-panel">
+      <h3 class="detail-panel-title">简介</h3>
+      <div class="detail-panel-body">${descContent}</div>
     </div>
-  `, false);
+  ` : '';
+
+  const innovationSection = innovationContent ? `
+    <div class="detail-panel">
+      <h3 class="detail-panel-title">核心创新</h3>
+      <div class="detail-panel-body">${innovationContent}</div>
+    </div>
+  ` : '';
+
+  const detailsSection = (infoGridHtml || tagsHtml || paperHtml) ? `
+    <div class="detail-panel">
+      <h3 class="detail-panel-title">详细信息</h3>
+      <div class="detail-panel-body">
+        ${infoGridHtml}
+        ${tagsHtml}
+        <div class="detail-actions">
+          ${paperHtml}
+        </div>
+      </div>
+    </div>
+  ` : '';
 
   return `
     <div class="detail-sidebar">
-      ${accordionIntro}
-      ${accordionInnovation}
-      ${accordionDetails}
+      ${introSection}
+      ${innovationSection}
+      ${detailsSection}
     </div>
   `;
 }

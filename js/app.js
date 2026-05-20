@@ -674,13 +674,6 @@ function renderInfoPage(m, container, modeToggleHtml) {
   `;
 }
 
-/** 手风琴展开/折叠控制 */
-function toggleAccordion(sectionId) {
-  const section = document.getElementById('accordion-' + sectionId);
-  if (!section) return;
-  section.classList.toggle('open');
-}
-
 /** 复制代码到剪贴板 */
 function copyCode() {
   const codeBlock = document.getElementById('vizCodeBlock');
@@ -2101,7 +2094,6 @@ window.showDetail = showDetail;
 window.showModelPreview = showModelPreview;
 window.copyCode = copyCode;
 window.copyModelCode = copyModelCode;
-window.toggleAccordion = toggleAccordion;
 window.renderModelDetailView = renderModelDetailView;
 window.showCodeTooltip = showCodeTooltip;
 window.hideCodeTooltip = hideCodeTooltip;
