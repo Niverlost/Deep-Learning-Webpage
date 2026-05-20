@@ -5213,6 +5213,12 @@ mark.search-highlight {
   animation: viewExit 0.25s var(--ease-in-out) forwards;
 }
 
+/* 防止视图获得焦点时显示蓝色轮廓线 */
+.view:focus,
+.view:focus-visible {
+  outline: none;
+}
+
 /* ==================== Empty State ==================== */
 .empty-state {
   text-align: center;
