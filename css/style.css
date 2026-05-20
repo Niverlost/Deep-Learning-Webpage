@@ -4740,7 +4740,7 @@ mark.search-highlight {
 
 .loading-progress-bar {
   height: 100%;
-  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  background: var(--text-muted);
   width: 0%;
   animation: loadingProgress 2s ease-in-out infinite;
 }
@@ -5243,15 +5243,13 @@ mark.search-highlight {
 
 .model-page-hero {
   position: relative;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 40px 48px;
   margin-bottom: 28px;
   overflow: hidden;
-  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  box-shadow: var(--shadow-sm);
+  transition: background var(--duration-normal) var(--apple-spring), border-color var(--duration-normal) var(--apple-spring), transform var(--duration-normal) var(--apple-spring), box-shadow var(--duration-normal) var(--apple-spring);
 }
 
 .model-page-hero h1 {
@@ -5296,16 +5294,18 @@ mark.search-highlight {
   color: var(--success);
 }
 
-/* Model Page Sections */
 .model-page-section {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 28px 32px;
   margin-bottom: 20px;
-  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  box-shadow: var(--shadow-sm);
+  transition: background var(--duration-normal) var(--apple-spring), border-color var(--duration-normal) var(--apple-spring);
+}
+
+.model-page-section:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
 }
 
 .model-page-section h2 {
@@ -5317,7 +5317,7 @@ mark.search-highlight {
   letter-spacing: 0.5px;
   margin-bottom: 18px;
   padding-bottom: 14px;
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--border);
 }
 
 .model-page-section p {
@@ -7067,14 +7067,17 @@ select:focus:not(:focus-visible) {
 }
 
 .detail-panel {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(180%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(180%);
   margin-bottom: 16px;
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  transition: background var(--duration-normal) var(--apple-spring), border-color var(--duration-normal) var(--apple-spring);
+}
+
+.detail-panel:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
 }
 
 .detail-panel-title {
@@ -7084,7 +7087,7 @@ select:focus:not(:focus-visible) {
   color: var(--text-primary);
   padding: 16px 20px;
   margin: 0;
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--border);
   letter-spacing: -0.01em;
 }
 
