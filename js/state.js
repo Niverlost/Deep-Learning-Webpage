@@ -449,9 +449,7 @@ function applySpotlightScheme(scheme) {
       }
     }
 
-    if (scheme === 'E') {
-      initMagicBeam(hero);
-    }
+    // 方案 E (Magic Beam) 已禁用 - 虚线装饰已移除
   } catch (error) {
     console.error('[State] 应用Spotlight方案失败:', error);
   }

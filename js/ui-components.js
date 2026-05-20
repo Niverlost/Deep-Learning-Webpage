@@ -466,8 +466,8 @@ function createModelCard(model, opts = {}) {
       </label>
     ` : ''}
 
-    <button class="model-card-fav ${favClass}" data-model-name="${escapedName}" aria-pressed="${isFavorite}" aria-label="${isFavorite ? '取消收藏' : '收藏'}">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+    <button class="model-card-fav ${favClass}" data-model-name="${escapedName}" aria-pressed="${isFavorite}" aria-label="${isFavorite ? '取消收藏' : '收藏'}" onclick="event.stopPropagation(); toggleFavorite('${escapedName.replace(/'/g, "\\'")}')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
     </button>
 
     <div class="model-card-icon">
@@ -495,7 +495,7 @@ function createModelCard(model, opts = {}) {
 
       <div class="model-card-footer">
         <span></span>
-        <a class="model-card-view-link" href="javascript:void(0)" onclick="showDetail('${escapedId}')" role="button" tabindex="0" aria-label="查看 ${escapedName} 的详情">查看详情 →</a>
+        <a class="model-card-view-link" href="javascript:void(0)" role="button" tabindex="0" aria-label="查看 ${escapedName} 的完整详情">查看详情 →</a>
       </div>
     </div>
   </div>`;
@@ -1349,20 +1349,24 @@ function setupModelGrid(container, callbacks = {}) {
       return;
     }
 
-    // 查看详情按钮（阻止冒泡）
-    const viewBtn = e.target.closest('.model-card-view-btn');
+    // 查看详情按钮 - 阻止冒泡后直接跳转，不弹出模态框
+    const viewBtn = e.target.closest('.model-card-view-link');
     if (viewBtn) {
       e.stopPropagation();
-      const modelName = viewBtn.dataset.model;
-      if (modelName && callbacks.onView) callbacks.onView(modelName);
+      const modelName = viewBtn.closest('.model-card')?.dataset.model;
+      if (modelName) {
+        navigate('model', { name: modelName });
+      }
       return;
     }
 
-    // 卡片点击
+    // 卡片点击 - 弹出预览模态框
     const card = e.target.closest('.model-card');
-    if (card && callbacks.onCardClick) {
+    if (card) {
       const modelName = card.dataset.model;
-      if (modelName) callbacks.onCardClick(modelName);
+      if (modelName) {
+        showModelPreview(modelName);
+      }
     }
   };
   container.addEventListener('click', container._gridClickHandler);
