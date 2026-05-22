@@ -409,10 +409,27 @@ function cleanupOldSpotlight(hero) {
     if (oldSpotlight) oldSpotlight.remove();
     const oldBeam = hero.querySelector('.hero-beam');
     if (oldBeam) oldBeam.remove();
+    hero.classList.remove('hero-glass');
+    const oldCanvas = hero.querySelector('.hero-particle-canvas');
+    if (oldCanvas) {
+      if (oldCanvas.__particleOrbit && oldCanvas.__particleOrbit.stop) {
+        oldCanvas.__particleOrbit.stop();
+      }
+      oldCanvas.remove();
+    }
     const statsCard = document.querySelector('.hero-stats');
     if (statsCard) {
       statsCard.classList.remove('border-beam', 'stripe-glow');
     }
+    hero.classList.remove('hero-sweep');
+    hero.style.removeProperty('--sweep-glow-x');
+    hero.style.removeProperty('--sweep-glow-y');
+    hero.classList.remove('hero-blobs');
+    hero.style.removeProperty('--blob-x');
+    hero.style.removeProperty('--blob-y');
+    hero.classList.remove('hero-grid');
+    hero.style.removeProperty('--grid-mouse-x');
+    hero.style.removeProperty('--grid-mouse-y');
   } catch (error) {
     console.warn('[State] 清理Spotlight失败:', error);
   }
@@ -429,27 +446,31 @@ function applySpotlightScheme(scheme) {
 
     cleanupOldSpotlight(hero);
 
-    if (scheme === 'A' || scheme === 'B') {
+    if (scheme === 'A') {
       const spotlight = document.createElement('div');
-      spotlight.className = 'hero-spotlight' + (scheme === 'B' ? ' vercel' : '');
+      spotlight.className = 'hero-spotlight';
       hero.insertBefore(spotlight, hero.firstChild);
       initSpotlightTracking(hero, spotlight);
     }
 
+    if (scheme === 'B') {
+      initParticleOrbit(hero);
+    }
+
     if (scheme === 'C') {
-      const statsCard = document.querySelector('.hero-stats');
-      if (statsCard) statsCard.classList.add('border-beam');
+      hero.classList.add('hero-grid');
+      initGridTracking(hero);
     }
 
     if (scheme === 'D') {
-      const statsCard = document.querySelector('.hero-stats');
-      if (statsCard) {
-        statsCard.classList.add('stripe-glow');
-        initStripeGlow(statsCard);
-      }
+      hero.classList.add('hero-blobs');
+      initBlobTracking(hero);
     }
 
-    // 方案 E (Magic Beam) 已禁用 - 虚线装饰已移除
+    if (scheme === 'E') {
+      hero.classList.add('hero-glass');
+      initGlassTracking(hero);
+    }
   } catch (error) {
     console.error('[State] 应用Spotlight方案失败:', error);
   }
@@ -505,27 +526,246 @@ function initSpotlightTracking(hero, spotlight) {
 }
 
 /**
+ * 初始化粒子星轨跟随（方案 B）
+ * 在 Hero 区域创建 Canvas 粒子系统：粒子围绕鼠标位置做轨道运动，
+ * 使用蓝紫 HSL 色彩渐变，具有延迟跟随效果。
+ * @param {HTMLElement} hero - Hero 元素
+ */
+function initParticleOrbit(hero) {
+  try {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'hero-particle-canvas';
+    canvas.width = hero.offsetWidth;
+    canvas.height = hero.offsetHeight;
+    hero.insertBefore(canvas, hero.firstChild);
+
+    const ctx = canvas.getContext('2d');
+    let isMouseInHero = false;
+    let rafId = null;
+    let opacity = 0;
+
+    const MAX_HISTORY = 60;
+    const mouseHistory = [];
+    let currentMouseX = hero.offsetWidth / 2;
+    let currentMouseY = hero.offsetHeight / 2;
+
+    const layerConfigs = [
+      { count: 4, radiusRange: [20, 40], sizeRange: [2, 3] },
+      { count: 4, radiusRange: [55, 85], sizeRange: [3, 4] },
+      { count: 3, radiusRange: [100, 150], sizeRange: [4, 5] }
+    ];
+
+    const particles = [];
+    let globalIdx = 0;
+    layerConfigs.forEach((layer, li) => {
+      for (let i = 0; i < layer.count; i++) {
+        const hue = 210 + Math.random() * 60;
+        particles.push({
+          layer: li,
+          angle: Math.random() * Math.PI * 2,
+          speed: (0.01 + Math.random() * 0.015) * (li % 2 === 0 ? 1 : -1),
+          radius: layer.radiusRange[0] + Math.random() * (layer.radiusRange[1] - layer.radiusRange[0]),
+          hue: hue,
+          saturation: 70 + Math.random() * 20,
+          lightness: 60 + Math.random() * 20,
+          size: layer.sizeRange[0] + Math.random() * (layer.sizeRange[1] - layer.sizeRange[0]),
+          delayIdx: Math.min(globalIdx * 4 + 2, MAX_HISTORY - 1),
+          alpha: 0.3 + Math.random() * 0.4
+        });
+        globalIdx++;
+      }
+    });
+
+    function draw() {
+      if (!isMouseInHero && opacity <= 0) {
+        rafId = null;
+        return;
+      }
+
+      mouseHistory.push({ x: currentMouseX, y: currentMouseY });
+      if (mouseHistory.length > MAX_HISTORY) {
+        mouseHistory.shift();
+      }
+
+      const targetOpacity = isMouseInHero ? 1 : 0;
+      opacity += (targetOpacity - opacity) * 0.05;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = opacity;
+
+      if (canvas.width !== hero.offsetWidth || canvas.height !== hero.offsetHeight) {
+        canvas.width = hero.offsetWidth;
+        canvas.height = hero.offsetHeight;
+      }
+
+      particles.forEach(p => {
+        p.angle += p.speed;
+
+        const histIdx = Math.max(0, mouseHistory.length - 1 - p.delayIdx);
+        const center = mouseHistory[Math.min(histIdx, mouseHistory.length - 1)];
+
+        if (!center) return;
+
+        const x = center.x + Math.cos(p.angle) * p.radius;
+        const y = center.y + Math.sin(p.angle) * p.radius;
+
+        const glowSize = p.size * 4;
+        const gradient = ctx.createRadialGradient(x, y, 0, x, y, glowSize);
+        gradient.addColorStop(0, `hsla(${p.hue}, ${p.saturation}%, ${p.lightness}%, ${p.alpha})`);
+        gradient.addColorStop(0.3, `hsla(${p.hue}, ${p.saturation}%, ${p.lightness}%, ${p.alpha * 0.3})`);
+        gradient.addColorStop(1, `hsla(${p.hue}, ${p.saturation}%, ${p.lightness}%, 0)`);
+
+        ctx.beginPath();
+        ctx.arc(x, y, glowSize, 0, Math.PI * 2);
+        ctx.fillStyle = gradient;
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(x, y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, ${p.saturation}%, ${p.lightness}%, ${p.alpha})`;
+        ctx.fill();
+      });
+
+      ctx.globalAlpha = 1;
+      rafId = requestAnimationFrame(draw);
+    }
+
+    let resizeTimer = null;
+    function handleResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        canvas.width = hero.offsetWidth;
+        canvas.height = hero.offsetHeight;
+      }, 100);
+    }
+
+    hero.addEventListener('mouseenter', () => {
+      isMouseInHero = true;
+      const rect = hero.getBoundingClientRect();
+      currentMouseX = rect.width / 2;
+      currentMouseY = rect.height / 2;
+      if (!rafId) {
+        rafId = requestAnimationFrame(draw);
+      }
+    });
+
+    hero.addEventListener('mousemove', (e) => {
+      const rect = hero.getBoundingClientRect();
+      currentMouseX = e.clientX - rect.left;
+      currentMouseY = e.clientY - rect.top;
+    });
+
+    hero.addEventListener('mouseleave', () => {
+      isMouseInHero = false;
+    });
+
+    window.addEventListener('resize', handleResize);
+
+    canvas.__particleOrbit = {
+      stop: function() {
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        window.removeEventListener('resize', handleResize);
+      }
+    };
+
+  } catch (error) {
+    console.warn('[State] 初始化粒子星轨失败:', error);
+  }
+}
+
+/**
  * 初始化 Stripe 卡片内发光（方案 D）
  * @param {HTMLElement} statsCard - 统计卡片元素
  */
-function initStripeGlow(statsCard) {
+function initBlobTracking(hero) {
   try {
-    let rafId = null;
-    let targetX = 0, targetY = 0;
-    statsCard.addEventListener('mousemove', (e) => {
-      const rect = statsCard.getBoundingClientRect();
-      targetX = ((e.clientX - rect.left) / rect.width) * 100;
-      targetY = ((e.clientY - rect.top) / rect.height) * 100;
-      if (!rafId) {
-        rafId = requestAnimationFrame(() => {
-          statsCard.style.setProperty('--tilt-x', targetX + '%');
-          statsCard.style.setProperty('--tilt-y', targetY + '%');
-          rafId = null;
-        });
-      }
+    hero.addEventListener('mousemove', function(e) {
+      var rect = hero.getBoundingClientRect();
+      var x = ((e.clientX - rect.left) / rect.width) * 100;
+      var y = ((e.clientY - rect.top) / rect.height) * 100;
+      hero.style.setProperty('--blob-x', x + '%');
+      hero.style.setProperty('--blob-y', y + '%');
+    });
+    hero.addEventListener('mouseleave', function() {
+      hero.style.setProperty('--blob-x', '50%');
+      hero.style.setProperty('--blob-y', '50%');
     });
   } catch (error) {
-    console.warn('[State] 初始化Stripe发光失败:', error);
+    console.warn('[State] 初始化光斑追踪失败:', error);
+  }
+}
+
+/**
+ * 初始化毛玻璃光晕鼠标追踪（方案 E）
+ * @param {HTMLElement} hero - Hero 元素
+ */
+function initGlassTracking(hero) {
+  try {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    let rafId = null;
+    let targetX = 50, targetY = 50;
+    let currentX = 50, currentY = 50;
+
+    function updateGlassPosition() {
+      currentX += (targetX - currentX) * 0.08;
+      currentY += (targetY - currentY) * 0.08;
+      hero.style.setProperty('--glass-x', currentX + '%');
+      hero.style.setProperty('--glass-y', currentY + '%');
+      rafId = requestAnimationFrame(updateGlassPosition);
+    }
+
+    hero.addEventListener('mouseenter', () => {
+      if (!rafId) {
+        rafId = requestAnimationFrame(updateGlassPosition);
+      }
+    });
+
+    hero.addEventListener('mousemove', (e) => {
+      const rect = hero.getBoundingClientRect();
+      targetX = ((e.clientX - rect.left) / rect.width) * 100;
+      targetY = ((e.clientY - rect.top) / rect.height) * 100;
+    });
+
+    hero.addEventListener('mouseleave', () => {
+      targetX = 50;
+      targetY = 50;
+    });
+  } catch (error) {
+    console.warn('[State] 初始化毛玻璃追踪失败:', error);
+  }
+}
+
+/**
+ * 初始化网格鼠标追踪（方案 C）
+ * @param {HTMLElement} hero - Hero 元素
+ */
+function initGridTracking(hero) {
+  try {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    hero.addEventListener('mousemove', (e) => {
+      const rect = hero.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      hero.style.setProperty('--grid-mouse-x', x + '%');
+      hero.style.setProperty('--grid-mouse-y', y + '%');
+    });
+
+    hero.addEventListener('mouseleave', () => {
+      hero.style.setProperty('--grid-mouse-x', '50%');
+      hero.style.setProperty('--grid-mouse-y', '50%');
+    });
+  } catch (error) {
+    console.warn('[State] 初始化网格追踪失败:', error);
   }
 }
 
@@ -554,31 +794,6 @@ function createBeamPath(d) {
  * 初始化 Magic UI 光束连接（方案 E）
  * @param {HTMLElement} hero - Hero 元素
  */
-function initMagicBeam(hero) {
-  try {
-    const beam = document.createElement('div');
-    beam.className = 'hero-beam';
-    beam.style.cssText = 'position:absolute;inset:0;pointer-events:none;z-index:0;';
-
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('width', '100%');
-    svg.setAttribute('height', '100%');
-    svg.style.overflow = 'visible';
-
-    const rect = hero.getBoundingClientRect();
-    const path1 = createBeamPath(`M ${rect.width * 0.5} ${rect.height * 0.35} Q ${rect.width * 0.3} ${rect.height * 0.5} ${rect.width * 0.2} ${rect.height * 0.65}`);
-    const path2 = createBeamPath(`M ${rect.width * 0.5} ${rect.height * 0.35} Q ${rect.width * 0.7} ${rect.height * 0.5} ${rect.width * 0.8} ${rect.height * 0.65}`);
-    
-    if (path1) svg.appendChild(path1);
-    if (path2) svg.appendChild(path2);
-
-    beam.appendChild(svg);
-    hero.insertBefore(beam, hero.firstChild);
-  } catch (error) {
-    console.error('[State] 初始化Magic光束失败:', error);
-  }
-}
-
 /**
  * 初始化 Hero 交互（在 init 中调用）
  */

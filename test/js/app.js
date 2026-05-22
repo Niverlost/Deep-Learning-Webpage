@@ -62,6 +62,9 @@ window.DeepLearningExplorer = {
   // Letter System
   initLetterSystem, destroyLetterSystem,
 
+  // Interaction Toggles
+  initInteractionToggles, loadInteractionSettings,
+
   // View Renderers
   renderHomeView, renderCategoryView, renderModelDetailView,
   renderFavoritesView, renderAdminView, renderCompareView,
@@ -160,6 +163,28 @@ async function initApp() {
       console.warn('[App] 路由初始化失败:', e);
     }
 
+    // 8.5 全局点击清除文本选择（防止点击空白处产生蓝条）
+    try {
+      document.addEventListener('mousedown', function(e) {
+        // 仅当点击在非可选区域时清除选择
+        var target = e.target;
+        if (target && (
+          target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.closest('.viz-code-body') ||
+          target.closest('.code-tooltip')
+        )) {
+          return;
+        }
+        var sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          sel.removeAllRanges();
+        }
+      }, false);
+    } catch (e) {
+      console.warn('[App] 全局点击清除选择失败:', e);
+    }
+
     // 9. 初始化 Hero 交互
     try {
       if (typeof initHeroInteractions === 'function') {
@@ -177,6 +202,15 @@ async function initApp() {
       }
     } catch (e) {
       console.warn('[App] 字母小人系统初始化失败:', e);
+    }
+
+    // 9.6 初始化交互指南开关系统
+    try {
+      if (typeof initInteractionToggles === 'function') {
+        initInteractionToggles();
+      }
+    } catch (e) {
+      console.warn('[App] 交互指南开关初始化失败:', e);
     }
 
     // 10. 解析初始路由
@@ -743,10 +777,13 @@ function loadModelCode(modelName) {
 function fetchCodeFile(filename, version) {
   var codeBlock = document.getElementById('vizCodeBlock');
   if (codeBlock) {
-    codeBlock.innerHTML = '<div class="code-loading">正在加载代码...</div>';
+    // 有内容时为版本切换，不显示加载状态；首次加载时显示简单提示
+    if (!codeBlock.children.length) {
+      codeBlock.innerHTML = '<div class="code-loading">正在加载代码...</div>';
+    }
   }
 
-  fetch('assets/models/' + filename)
+  return fetch('assets/models/' + filename)
     .then(function(response) {
       if (!response.ok) {
         throw new Error('HTTP ' + response.status);
@@ -764,16 +801,27 @@ function fetchCodeFile(filename, version) {
     });
 }
 
-/** 显示代码 */
+/** 显示代码 - 使用带行号的渲染 */
 function displayCode(code) {
   var codeBlock = document.getElementById('vizCodeBlock');
   if (!codeBlock) return;
 
-  if (typeof escapeCodeHtml === 'function' && typeof highlightSyntax === 'function') {
-    codeBlock.innerHTML = highlightSyntax(escapeCodeHtml(code));
+  codeBlock.style.opacity = '0.3';
+
+  var highlighted;
+  if (typeof highlightSyntax === 'function') {
+    highlighted = highlightSyntax(code);
+  } else if (typeof escapeCodeHtml === 'function') {
+    highlighted = escapeCodeHtml(code);
   } else {
-    codeBlock.textContent = code;
+    highlighted = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
+
+  renderCodeWithLineNumbers(highlighted, codeBlock);
+
+  requestAnimationFrame(function() {
+    codeBlock.style.opacity = '1';
+  });
 }
 
 /** 显示加载错误 */
@@ -806,7 +854,17 @@ function switchCodeVersion(version) {
     }
   }
 
-  fetchCodeFile(filename, version);
+  // 保存当前页面滚动位置，防止切换代码后页面跳动
+  var savedScrollY = window.scrollY || window.pageYOffset;
+  // 获取代码面板容器，用于切换后滚动到顶部（让用户看到新代码开头）
+  var codeBody = document.querySelector('.viz-code-body');
+
+  fetchCodeFile(filename, version).then(function() {
+    // 代码加载完成后恢复页面滚动位置
+    window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+    // 代码面板内部滚动到顶部，让用户看到新版本代码的开头
+    if (codeBody) codeBody.scrollTop = 0;
+  });
 }
 
 /** 下载当前显示的代码 */
@@ -831,10 +889,11 @@ function downloadCurrentCode() {
 
 /** 复制代码到剪贴板 */
 function copyCode() {
-  const codeBlock = document.getElementById('vizCodeBlock');
-  if (!codeBlock) return;
-  const text = codeBlock.textContent || codeBlock.innerText;
-  navigator.clipboard.writeText(text).then(() => {
+  if (!_currentCodeContent) {
+    showToast('没有可复制的代码', 'error');
+    return;
+  }
+  navigator.clipboard.writeText(_currentCodeContent).then(() => {
     const btn = document.querySelector('.code-copy-btn');
     if (btn) {
       btn.textContent = '已复制';
@@ -1695,56 +1754,6 @@ function fitColumn(colIndex) {
   col.style.overflow = '';
 }
 
-/** HTML 转义特殊字符 */
-function escapeCodeHtml(str) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-/** PyTorch 语法高亮（正则替换） */
-function highlightSyntax(code) {
-  // 先转义 HTML 特殊字符
-  let html = escapeCodeHtml(code);
-
-  // 1. 注释 (# ...) - 最高优先级，先处理以避免后续替换干扰
-  html = html.replace(/(#.*?)(\n|$)/g, '<span class="syn-comment">$1</span>$2');
-
-  // 2. 字符串（三引号和单/双引号）
-  html = html.replace(/("""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')/g, '<span class="syn-string">$1</span>');
-  html = html.replace(/("(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\')/g, '<span class="syn-string">$1</span>');
-
-  // 3. 关键字
-  const keywords = ['def', 'class', 'import', 'from', 'return', 'if', 'elif', 'else', 'for', 'while', 'with', 'as', 'try', 'except', 'finally', 'raise', 'yield', 'lambda', 'pass', 'break', 'continue', 'and', 'or', 'not', 'in', 'is', 'global', 'nonlocal', 'assert', 'del'];
-  const kwPattern = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
-  html = html.replace(kwPattern, '<span class="syn-keyword">$1</span>');
-
-  // self
-  html = html.replace(/\b(self)\b/g, '<span class="syn-param">$1</span>');
-
-  // 4. 类名 (大写开头的标识符，如 nn.Module, Conv2d, Sequential, Linear, ReLU 等)
-  const classNames = ['nn\\.Module', 'nn\\.Sequential', 'nn\\.Linear', 'nn\\.Conv2d', 'nn\\.Conv1d', 'nn\\.MaxPool2d', 'nn\\.AvgPool2d', 'nn\\.Dropout', 'nn\\.ReLU', 'nn\\.Sigmoid', 'nn\\.Tanh', 'nn\\.BatchNorm2d', 'nn\\.LayerNorm', 'nn\\.Embedding', 'nn\\.Transformer', 'nn\\.MultiheadAttention', 'nn\\.CrossEntropyLoss', 'nn\\.MSELoss', 'nn\\.Softmax', 'nn\\.Flatten', 'torch', 'nn', 'F', 'MLP', 'super'];
-  const classPattern = new RegExp('\\b(' + classNames.join('|') + ')\\b', 'g');
-  html = html.replace(classPattern, '<span class="syn-class">$1</span>');
-
-  // 5. 数字
-  html = html.replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-number">$1</span>');
-
-  // 6. 函数调用 (标识符后跟括号)
-  html = html.replace(/\b([a-zA-Z_]\w*)\s*(?=\()/g, function(match, fname) {
-    // 跳过已经被 span 包裹的
-    if (match.includes('span')) return match;
-    return '<span class="syn-func">' + fname + '</span>';
-  });
-
-  // 7. 运算符
-  html = html.replace(/([+\-*=\/%&lt;&gt;!]=?)/g, '<span class="syn-op">$1</span>');
-
-  return html;
-}
-
 /** 将代码文本渲染为带行号的 HTML */
 function renderCodeWithLineNumbers(codeHtml, codeBlock) {
   // codeHtml 是已经过高亮的 HTML 字符串，按行分割
@@ -1778,29 +1787,7 @@ function scrollToCodeHighlight() {
   }
 }
 
-/** 复制代码到剪贴板 */
-function copyCode() {
-  const codeBlock = document.getElementById('vizCodeBlock');
-  if (!codeBlock) return;
 
-  // 提取纯文本代码（去掉 HTML 标签）
-  const text = codeBlock.textContent || codeBlock.innerText;
-
-  navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector('.code-copy-btn');
-    if (btn) {
-      btn.textContent = '已复制';
-      btn.classList.add('copied');
-      setTimeout(() => {
-        btn.textContent = '复制代码';
-        btn.classList.remove('copied');
-      }, 2000);
-    }
-    showToast('代码已复制到剪贴板', 'success');
-  }).catch(() => {
-    showToast('复制失败，请手动选择复制', 'error');
-  });
-}
 
 // ==================== 代码浮窗 ====================
 let codeTooltip = null;
@@ -1902,7 +1889,11 @@ function showCodeTooltip(blockId, element) {
   const codeLines = getBlockCodeLines(blockId, config);
   if (!codeLines || codeLines.length === 0) return;
 
-  // 创建或更新浮窗
+  // 获取可视化容器
+  var vizContainer = document.querySelector('.viz-network-panel') || document.querySelector('.viz-container');
+  if (!vizContainer) return;
+
+  // 创建或更新浮窗（插入到容器内而非 body）
   if (!codeTooltip) {
     codeTooltip = document.createElement('div');
     codeTooltip.className = 'code-tooltip';
@@ -1915,7 +1906,7 @@ function showCodeTooltip(blockId, element) {
       </div>
       <div class="code-tooltip-body"></div>
     `;
-    document.body.appendChild(codeTooltip);
+    vizContainer.appendChild(codeTooltip);
   }
 
   // 设置内容
@@ -1923,32 +1914,89 @@ function showCodeTooltip(blockId, element) {
   const highlightedCode = highlightSyntax(codeLines.join('\n'));
   body.innerHTML = `<pre><code>${highlightedCode}</code></pre>`;
 
-  // 定位到元素旁边
-  const rect = element.getBoundingClientRect();
-  const tooltipWidth = 400; // 最大宽度
+  // 计算相对于容器的位置
+  var containerRect = vizContainer.getBoundingClientRect();
+  var elementRect = element.getBoundingClientRect();
+  var tooltipWidth = 400;
+  var tooltipHeight = 200;
 
-  // 计算水平位置，确保不超出视口
-  let left = rect.left;
-  if (left + tooltipWidth > window.innerWidth - 20) {
-    left = window.innerWidth - tooltipWidth - 20;
-  }
-  if (left < 20) left = 20;
+  // 检测模块是否完全在视口内（考虑模块部分被遮挡的情况）
+  var elementVisibleTop = Math.max(elementRect.top, containerRect.top);
+  var elementVisibleBottom = Math.min(elementRect.bottom, containerRect.bottom);
+  var elementVisibleHeight = elementVisibleBottom - elementVisibleTop;
 
-  // 计算垂直位置
-  let top = rect.bottom + 8;
-  if (top + 280 > window.innerHeight) {
-    top = rect.top - 8 - 200; // 显示在元素上方
+  // 如果模块被遮挡超过一半，将弹窗定位在视口中央而非模块旁边
+  var isElementMostlyHidden = elementVisibleHeight < elementRect.height * 0.5;
+
+  var left, top;
+
+  if (isElementMostlyHidden) {
+    // 模块大部分被遮挡：弹窗居中显示在可视区域
+    left = (containerRect.width - tooltipWidth) / 2;
+    top = (containerRect.height - tooltipHeight) / 2;
+  } else {
+    // 模块正常可见：优先显示在右侧
+    left = elementRect.right - containerRect.left + 8;
+    top = elementRect.top - containerRect.top;
+
+    // 右侧空间检测
+    if (left + tooltipWidth > containerRect.width) {
+      left = elementRect.left - containerRect.left - tooltipWidth - 8; // 显示在左侧
+    }
+
+    // 上下边界检测
+    if (top + tooltipHeight > containerRect.height) {
+      top = containerRect.height - tooltipHeight - 8;
+    }
+    if (top < 0) top = 8;
   }
 
   codeTooltip.style.top = top + 'px';
   codeTooltip.style.left = left + 'px';
   codeTooltip.classList.add('visible');
+
+  // 添加滚动关闭监听器（阈值策略：滚动超过 40px 才关闭，避免轻微滚动误触）
+  if (codeTooltip._scrollHandler) {
+    window.removeEventListener('scroll', codeTooltip._scrollHandler, true);
+  }
+  codeTooltip._scrollStartY = window.scrollY || window.pageYOffset;
+  codeTooltip._scrollHandler = function() {
+    var currentScrollY = window.scrollY || window.pageYOffset;
+    var scrollDelta = Math.abs(currentScrollY - codeTooltip._scrollStartY);
+    // 只有滚动超过阈值（40px）才关闭，轻微滚动保持打开
+    if (scrollDelta > 40) {
+      hideCodeTooltip();
+    }
+  };
+  window.addEventListener('scroll', codeTooltip._scrollHandler, { passive: true, capture: true });
+
+  // 添加ESC键关闭监听器
+  if (codeTooltip._keydownHandler) {
+    document.removeEventListener('keydown', codeTooltip._keydownHandler);
+  }
+  codeTooltip._keydownHandler = function(e) {
+    if (e.key === 'Escape') {
+      hideCodeTooltip();
+    }
+  };
+  document.addEventListener('keydown', codeTooltip._keydownHandler);
 }
 
 /** 隐藏代码浮窗 */
 function hideCodeTooltip() {
   if (codeTooltip) {
     codeTooltip.classList.remove('visible');
+    // 清理滚动监听器
+    if (codeTooltip._scrollHandler) {
+      window.removeEventListener('scroll', codeTooltip._scrollHandler, { capture: true });
+      codeTooltip._scrollHandler = null;
+    }
+    codeTooltip._scrollStartY = null;
+    // 清理键盘监听器
+    if (codeTooltip._keydownHandler) {
+      document.removeEventListener('keydown', codeTooltip._keydownHandler);
+      codeTooltip._keydownHandler = null;
+    }
   }
 }
 
@@ -2052,8 +2100,12 @@ function renderBlockCode(vizConfig) {
   const plainCode = lines.map(l => l.text).join('\n');
   const highlighted = highlightSyntax(plainCode);
 
-  // 渲染带行号的 HTML
+  // 渲染带行号的 HTML（透明度过渡，减少内容跳动）
+  codeBlock.style.opacity = '0.5';
   renderCodeWithLineNumbers(highlighted, codeBlock);
+  requestAnimationFrame(() => {
+    codeBlock.style.opacity = '1';
+  });
 
   // 添加选中行高亮
   lines.forEach((l, i) => {
@@ -2062,8 +2114,6 @@ function renderBlockCode(vizConfig) {
       if (lineEl) lineEl.classList.add('code-selected-line');
     }
   });
-
-  scrollToCodeHighlight();
 }
 
 // ==================== MLP 可视化 ====================

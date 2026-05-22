@@ -221,6 +221,7 @@ const ClickChorus = {
   },
 
   triggerChorus() {
+    if (!(window.LetterSystem && window.LetterSystem.config && window.LetterSystem.config.easterEggs)) return;
     const stage = document.getElementById('letterStage');
     if (!stage) return;
     const chars = stage.querySelectorAll('.letter-char');
@@ -460,8 +461,8 @@ const ParticleEngine = {
       window.removeEventListener('resize', this._resizeHandler);
       this._resizeHandler = null;
     }
-    if (this.canvas) {
-      this.canvas.remove();
+    if (this.canvas && this.canvas.parentNode) {
+      this.canvas.parentNode.removeChild(this.canvas);
       this.canvas = null;
       this.ctx = null;
     }
@@ -689,7 +690,7 @@ function initLetterStage() {
   // I10创新：入场动画完成后检查庆祝
   const maxDelay = Math.max(...LETTER_CONFIGS.map(c => c.delay || 0));
   const totalAnimTime = (maxDelay + 0.8) * 1000 + 200;
-  let celebrationTimer = setTimeout(() => {
+  let celebrationTimer = trackedSetTimeout(() => {
     const favLetter = LetterMemory.getFavoriteLetter();
     if (LetterMemory.shouldCelebrate()) {
       // 每5次访问庆祝：所有字母开心跳跃
@@ -713,18 +714,19 @@ function initLetterStage() {
 }
 
 function setupLetterSystem(stage) {
-  // I8创新：深夜模式自动sleepy（22:00-06:00）
-  const hour = new Date().getHours();
-  const isNightTime = hour >= 22 || hour < 6;
-
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const chars = Array.from(stage.querySelectorAll('.letter-char'));
   if (!chars.length) return;
 
   // ===== 交互开关配置（可由用户控制）=====
   const interactionConfig = {
+    allInteractions: true,  // 全部交互总开关
+    mouseInteractions: true, // 鼠标交互（总开关）
     lazyActions: true,      // 偷懒动作（总开关）
     socialInteractions: true, // 社交互动（总开关）
+    visualEffects: true,    // 视觉特效（总开关）
+    easterEggs: true,       // 趣味彩蛋（总开关）
+    environmentAwareness: true, // 环境感知（总开关）
     snakeFollow: true,      // 排队跟随
     scaredBounce: true,     // 吓退弹跳
     eyeTracking: true,      // 眼球跟随
@@ -744,10 +746,28 @@ function setupLetterSystem(stage) {
     socialWhisper: true,    // 窃窃私语
     socialEyeContact: true, // 传递眼神
     socialCelebrate: true,  // 庆祝跳跃
+    // 视觉特效子开关
+    particleEffects: true,  // 粒子特效
+    breathAnimation: true,  // 呼吸动画
+    randomBlinking: true,   // 随机眨眼
+    // 趣味彩蛋子开关
+    doubleClickSpin: true,  // 双击旋转
+    // 环境感知子开关
+    nightMode: true,        // 深夜模式
+    wavingGoodbye: true,    // 挥手告别
   };
   // 使用单一命名空间对象，避免全局污染
   if (!window.LetterSystem) window.LetterSystem = {};
   window.LetterSystem.config = interactionConfig;
+
+  // 从 localStorage 加载用户保存的交互设置
+  if (typeof loadInteractionSettings === 'function') {
+    loadInteractionSettings();
+  }
+
+  // I8创新：深夜模式自动sleepy（22:00-06:00）
+  var hour = new Date().getHours();
+  var isNightTime = (hour >= 22 || hour < 6) && interactionConfig.nightMode && interactionConfig.environmentAwareness;
 
   // ============================================================
   // 第一部分：状态机初始化
@@ -997,6 +1017,7 @@ function setupLetterSystem(stage) {
   let hasWavedGoodbye = false;
   const goodbyeObserver = new IntersectionObserver((entries) => {
     if (prefersReducedMotion) return;
+    if (!interactionConfig.wavingGoodbye || !interactionConfig.environmentAwareness) return;
     entries.forEach(entry => {
       // 字母舞台即将离开视口（可见度低于20%）
       if (entry.intersectionRatio < 0.2 && !hasWavedGoodbye) {
@@ -1126,12 +1147,15 @@ function setupLetterSystem(stage) {
 
   /** 通用退出当前状态 */
   function exitState(s) {
+    if (s._isExiting) return;
+    s._isExiting = true;
     switch (s.state) {
       case 'hover': exitHover(s); break;
       case 'lazy': exitLazy(s); break;
       case 'social': exitSocial(s); break;
       case 'scared': exitScared(s); break;
     }
+    s._isExiting = false;
   }
 
   // ============================================================
@@ -1159,6 +1183,11 @@ function setupLetterSystem(stage) {
   }
 
   function applyEmotion(s, emotion) {
+    // 清理之前的 talking 定时器
+    if (s.talkingTimer) {
+      trackedClearTimeout(s.talkingTimer);
+      s.talkingTimer = null;
+    }
     // 清除旧情绪类
     s.el.classList.remove('happy', 'surprised', 'sleepy', 'yawning', 'excited', 'sad', 'curious', 'scared', 'bored', 'talking');
     s.eyes.forEach(e => e.classList.remove('sleepy', 'surprised', 'sad', 'curious', 'scared', 'bored'));
@@ -1193,8 +1222,8 @@ function setupLetterSystem(stage) {
     if (!interactionConfig.eyeTracking) return;
     updatePositionCache();
     states.forEach(s => {
-      // lazy 或 social 状态不参与眼球跟随
-      if (s.state === 'lazy' || s.state === 'social') return;
+      // lazy、social 或 scared 状态不参与眼球跟随
+      if (s.state === 'lazy' || s.state === 'social' || s.state === 'scared') return;
       // 跳过有 CSS animation 的瞳孔
       const hasPupilAnimation = Array.from(s.pupils).some(p => p.style.animation && p.style.animation !== '');
       if (hasPupilAnimation) return;
@@ -1251,12 +1280,15 @@ function setupLetterSystem(stage) {
         return;
       }
 
-      // 3. 非常近：吓退弹跳（只触发一次）
+      // 3. 非常近：吓退弹跳（只触发一次，优先级最高）
       if (dist < SCARED_DISTANCE_THRESHOLD && !s.scaredTriggered && interactionConfig.scaredBounce && mouseSpeed < MOUSE_SLOW_THRESHOLD) {
         s.scaredTriggered = true;
         triggerScaredBounce(s, dx, dy, dist);
         return;
       }
+
+      // 4. 处于 scared 状态时，跳过距离梯度反馈
+      if (s.state === 'scared') return;
 
       // I2创新：连续距离梯度反馈（消除三段式离散反馈）
       // 计算连续梯度因子 (0-1)，距离越近因子越大
@@ -1335,15 +1367,18 @@ function setupLetterSystem(stage) {
                         !interactionConfig.bodyReaction && !interactionConfig.scaredBounce &&
                         !interactionConfig.squashStretch && !interactionConfig.eyeTracking &&
                         !interactionConfig.lazyActions && !interactionConfig.socialInteractions &&
-                        !interactionConfig.snakeFollow;
-    if (allDisabled) return;
+                        !interactionConfig.snakeFollow && !interactionConfig.visualEffects &&
+                        !interactionConfig.easterEggs && !interactionConfig.environmentAwareness;
+    if (allDisabled) { rafId = null; return; }
 
     // I4创新：全局呼吸时间
     const breathTime = Date.now() * 0.002;
 
     states.forEach((s, idx) => {
       // 如果有 CSS animation 在运行，跳过 rAF transform
-      const hasCssAnimation = s.el.style.animation && s.el.style.animation !== '';
+      const style = getComputedStyle(s.el);
+      const hasCssAnimation = (style.animationName && style.animationName !== 'none') ||
+                              (style.transition && style.transition !== 'none' && style.transition !== 'all 0s ease 0s');
       if (!hasCssAnimation) {
         // I1创新：弹簧物理替代简单LERP
         const dxC = s.tx - s.cx;
@@ -1362,8 +1397,18 @@ function setupLetterSystem(stage) {
         s.vs = (s.vs + dsC * SPRING_STIFFNESS) * SPRING_DAMPING;
         s.cs += s.vs;
 
+        // 当字母完全归位且速度极小时，重置速度防止微小抖动
+        if (s.state === 'idle' && Math.abs(s.cx) < 0.5 && Math.abs(s.cy) < 0.5 && Math.abs(s.cr) < 0.5 && Math.abs(s.cs - 1) < 0.01) {
+          s.cx = s.cy = s.cr = 0;
+          s.cs = 1;
+          s.vx = s.vy = s.vr = s.vs = 0;
+        }
+
         // I4创新：呼吸微动（每个字母相位偏移）
-        const breathScale = 1 + Math.sin(breathTime + idx * 0.5) * 0.005;
+        var breathScale = 1;
+        if (interactionConfig.breathAnimation && interactionConfig.visualEffects) {
+          breathScale = 1 + Math.sin(breathTime + idx * 0.5) * 0.005;
+        }
         const finalScale = s.cs * breathScale;
 
         s.el.style.transform =
@@ -1399,6 +1444,7 @@ function setupLetterSystem(stage) {
   // ============================================================
   // A4创新：单眼眨眼变化
   function scheduleBlink(eyes) {
+    if (!interactionConfig.randomBlinking || !interactionConfig.visualEffects) return;
     trackedSetTimeout(() => {
       if (isDestroyed) return;
       // 20%概率单眼眨眼
@@ -1577,17 +1623,22 @@ function setupLetterSystem(stage) {
   // ============================================================
   // 第九部分：Hover 和点击事件
   // ============================================================
+  // 检测是否为触摸设备，避免触摸设备上同时触发 mouse 和 touch 事件
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
   chars.forEach((el, i) => {
-    // Hover 进入
-    el.addEventListener('mouseenter', () => {
-      if (prefersReducedMotion || !interactionConfig.hover) return;
-      enterHover(states[i]);
-    });
-    // Hover 退出
-    el.addEventListener('mouseleave', () => {
-      if (prefersReducedMotion) return;
-      exitHover(states[i]);
-    });
+    // Hover 进入（非触摸设备才绑定鼠标事件）
+    if (!isTouchDevice) {
+      el.addEventListener('mouseenter', () => {
+        if (prefersReducedMotion || !interactionConfig.hover) return;
+        enterHover(states[i]);
+      });
+      // Hover 退出
+      el.addEventListener('mouseleave', () => {
+        if (prefersReducedMotion) return;
+        exitHover(states[i]);
+      });
+    }
     // I5创新：触摸设备hover等效
     let touchTimer = null;
     el.addEventListener('touchstart', (e) => {
@@ -1713,6 +1764,7 @@ function setupLetterSystem(stage) {
     el.addEventListener('dblclick', (e) => {
       e.preventDefault();
       if (prefersReducedMotion) return;
+      if (!interactionConfig.doubleClickSpin || !interactionConfig.easterEggs) return;
       const s = states[i];
       if (s.state !== 'idle') return;
       s.el.style.animation = 'letterSpin 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)';
@@ -1729,6 +1781,7 @@ function setupLetterSystem(stage) {
 
   // 简单粒子生成函数（I6配套）
   function spawnParticles(parentEl, count, type) {
+    if (!interactionConfig.particleEffects || !interactionConfig.visualEffects) return;
     const rect = parentEl.getBoundingClientRect();
     const animations = ['particleBurst', 'particleArc', 'particleSpiral'];
     for (let i = 0; i < count; i++) {
@@ -1963,21 +2016,21 @@ function setupLetterSystem(stage) {
     // I18创新：跨组社交互动（20%概率触发Deep组和Learning组之间的互动）
     if (interactionConfig.socialWhisper && Math.random() < 0.2 && states.length >= 5) {
       availableInteractions.push(() => {
-        // Deep组最后一个字母 (p, index 3) 和 Learning组第一个字母 (L, index 4)
-        const deepLast = states[3];  // p
-        const learningFirst = states[4];  // L
-        if (!deepLast || !learningFirst || deepLast.state !== 'idle' || learningFirst.state !== 'idle') return;
+        // Deep组最后一个字母 (p) 和 Learning组第一个字母 (L)
+        const pState = states.find(function(s) { return s.el.getAttribute('data-letter') === 'p'; });
+        const lState = states.find(function(s) { return s.el.getAttribute('data-letter') === 'L'; });
+        if (!pState || !lState || pState.state !== 'idle' || lState.state !== 'idle') return;
 
-        enterSocial(deepLast);
-        enterSocial(learningFirst);
+        enterSocial(pState);
+        enterSocial(lState);
 
         // 跨组打招呼动画
-        deepLast.el.style.animation = 'waveCrossGroup 1.5s ease-in-out';
-        learningFirst.el.style.animation = 'waveCrossGroup 1.5s ease-in-out 0.2s';
+        pState.el.style.animation = 'waveCrossGroup 1.5s ease-in-out';
+        lState.el.style.animation = 'waveCrossGroup 1.5s ease-in-out 0.2s';
 
         // 互相看对方
-        setEmotion(deepLast, 'happy');
-        setEmotion(learningFirst, 'happy');
+        setEmotion(pState, 'happy');
+        setEmotion(lState, 'happy');
 
         // 其他字母也转头看向他们
         const otherIndices = [0, 1, 2, 5, 6, 7, 8, 9, 10, 11];
@@ -1993,10 +2046,10 @@ function setupLetterSystem(stage) {
         });
 
         trackedSetTimeout(() => {
-          deepLast.el.style.animation = '';
-          learningFirst.el.style.animation = '';
-          exitSocial(deepLast);
-          exitSocial(learningFirst);
+          pState.el.style.animation = '';
+          lState.el.style.animation = '';
+          exitSocial(pState);
+          exitSocial(lState);
         }, 1800);
       });
     }

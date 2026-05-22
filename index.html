@@ -526,6 +526,17 @@
       </button>
       <h2 class="guide-title"><span aria-hidden="true">🎮</span> 字母小人交互指南</h2>
       <p class="guide-subtitle">探索 "Deep Learning" 字母们的有趣互动！</p>
+
+      <!-- 全部交互总开关 -->
+      <div class="guide-section guide-section-master">
+        <div class="guide-section-header">
+          <h3>全部交互</h3>
+          <label class="ios-toggle" title="总开关：全部交互">
+            <input type="checkbox" class="ios-toggle-input" data-setting="allInteractions" checked role="switch" aria-checked="true" aria-label="全部交互总开关" tabindex="0">
+            <span class="ios-toggle-slider"></span>
+          </label>
+        </div>
+      </div>
       
       <!-- V7创新：SVG图标系统 -->
       <svg style="display: none;">
@@ -609,6 +620,28 @@
             </div>
             <label class="ios-toggle ios-toggle-sm" title="按住压扁">
               <input type="checkbox" class="ios-toggle-input" data-setting="squashStretch" checked role="switch" aria-checked="true" aria-label="按住压扁开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-eyecontact"/></svg>
+            <div class="guide-text">
+              <strong>眼球跟随</strong>
+              <p>字母瞳孔实时追踪鼠标位置</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="眼球跟随">
+              <input type="checkbox" class="ios-toggle-input" data-setting="eyeTracking" checked role="switch" aria-checked="true" aria-label="眼球跟随开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-snake"/></svg>
+            <div class="guide-text">
+              <strong>排队跟随</strong>
+              <p>快速移动鼠标，字母像贪吃蛇排队</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="排队跟随">
+              <input type="checkbox" class="ios-toggle-input" data-setting="snakeFollow" checked role="switch" aria-checked="true" aria-label="排队跟随开关" tabindex="0">
               <span class="ios-toggle-slider"></span>
             </label>
           </div>
@@ -725,17 +758,6 @@
             </label>
           </div>
           <div class="guide-item">
-            <svg class="guide-icon"><use href="#icon-snake"/></svg>
-            <div class="guide-text">
-              <strong>排队跟随</strong>
-              <p>快速移动鼠标，字母像贪吃蛇跟随</p>
-            </div>
-            <label class="ios-toggle ios-toggle-sm" title="排队跟随">
-              <input type="checkbox" class="ios-toggle-input" data-setting="snakeFollow" checked role="switch" aria-checked="true" aria-label="排队跟随开关" tabindex="0">
-              <span class="ios-toggle-slider"></span>
-            </label>
-          </div>
-          <div class="guide-item">
             <svg class="guide-icon"><use href="#icon-celebrate"/></svg>
             <div class="guide-text">
               <strong>庆祝跳跃</strong>
@@ -766,6 +788,111 @@
           <span class="personality-tag" style="--color:#CE82FF">g 神秘</span>
         </div>
       </div>
+
+      <!-- 视觉特效系统 -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <h3><span aria-hidden="true">🎆</span> 视觉特效系统</h3>
+          <label class="ios-toggle" title="总开关：视觉特效">
+            <input type="checkbox" class="ios-toggle-input" data-setting="visualEffects" checked role="switch" aria-checked="true" aria-label="视觉特效总开关" tabindex="0">
+            <span class="ios-toggle-slider"></span>
+          </label>
+        </div>
+        <div class="guide-grid">
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-celebrate"/></svg>
+            <div class="guide-text">
+              <strong>粒子特效</strong>
+              <p>点击/庆祝时发射粒子</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="粒子特效">
+              <input type="checkbox" class="ios-toggle-input" data-setting="particleEffects" checked role="switch" aria-checked="true" aria-label="粒子特效开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-stretch"/></svg>
+            <div class="guide-text">
+              <strong>呼吸动画</strong>
+              <p>字母持续的呼吸缩放</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="呼吸动画">
+              <input type="checkbox" class="ios-toggle-input" data-setting="breathAnimation" checked role="switch" aria-checked="true" aria-label="呼吸动画开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-peek"/></svg>
+            <div class="guide-text">
+              <strong>随机眨眼</strong>
+              <p>字母偶尔随机眨眼睛</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="随机眨眼">
+              <input type="checkbox" class="ios-toggle-input" data-setting="randomBlinking" checked role="switch" aria-checked="true" aria-label="随机眨眼开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 趣味彩蛋 -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <h3><span aria-hidden="true">🥚</span> 趣味彩蛋</h3>
+          <label class="ios-toggle" title="总开关：趣味彩蛋">
+            <input type="checkbox" class="ios-toggle-input" data-setting="easterEggs" checked role="switch" aria-checked="true" aria-label="趣味彩蛋总开关" tabindex="0">
+            <span class="ios-toggle-slider"></span>
+          </label>
+        </div>
+        <div class="guide-grid">
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-click"/></svg>
+            <div class="guide-text">
+              <strong>双击旋转</strong>
+              <p>双击字母使其旋转</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="双击旋转">
+              <input type="checkbox" class="ios-toggle-input" data-setting="doubleClickSpin" checked role="switch" aria-checked="true" aria-label="双击旋转开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 环境感知 -->
+      <div class="guide-section">
+        <div class="guide-section-header">
+          <h3><span aria-hidden="true">🌍</span> 环境感知</h3>
+          <label class="ios-toggle" title="总开关：环境感知">
+            <input type="checkbox" class="ios-toggle-input" data-setting="environmentAwareness" checked role="switch" aria-checked="true" aria-label="环境感知总开关" tabindex="0">
+            <span class="ios-toggle-slider"></span>
+          </label>
+        </div>
+        <div class="guide-grid">
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-sleep"/></svg>
+            <div class="guide-text">
+              <strong>深夜模式</strong>
+              <p>22:00-06:00 字母更易瞌睡</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="深夜模式">
+              <input type="checkbox" class="ios-toggle-input" data-setting="nightMode" checked role="switch" aria-checked="true" aria-label="深夜模式开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+          <div class="guide-item">
+            <svg class="guide-icon"><use href="#icon-hover"/></svg>
+            <div class="guide-text">
+              <strong>挥手告别</strong>
+              <p>切走页面时字母挥手再见</p>
+            </div>
+            <label class="ios-toggle ios-toggle-sm" title="挥手告别">
+              <input type="checkbox" class="ios-toggle-input" data-setting="wavingGoodbye" checked role="switch" aria-checked="true" aria-label="挥手告别开关" tabindex="0">
+              <span class="ios-toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
       
       <!-- Spotlight 方案选择 -->
       <div class="guide-section">
@@ -786,32 +913,32 @@
             <input type="radio" name="spotlightScheme" value="B" onchange="setSpotlightScheme('B')">
             <span class="spotlight-option-card">
               <strong>方案 B</strong>
-              <span>Vercel 极简光晕</span>
-              <small>极淡光晕，几乎不可见</small>
+              <span>Canvas 粒子星轨</span>
+              <small>蓝紫粒子绕鼠标轨道运动</small>
             </span>
           </label>
           <label class="spotlight-option">
             <input type="radio" name="spotlightScheme" value="C" onchange="setSpotlightScheme('C')">
             <span class="spotlight-option-card">
               <strong>方案 C</strong>
-              <span>Linear 边框流光</span>
-              <small>卡片边缘旋转渐变边框</small>
+              <span>网格光波</span>
+              <small>鼠标附近网格线变亮</small>
             </span>
           </label>
           <label class="spotlight-option">
             <input type="radio" name="spotlightScheme" value="D" onchange="setSpotlightScheme('D')">
             <span class="spotlight-option-card">
               <strong>方案 D</strong>
-              <span>Stripe 卡片内发光</span>
-              <small>鼠标位置产生内部光斑</small>
+              <span>动态幻彩光斑</span>
+              <small>模糊色块浮动变幻</small>
             </span>
           </label>
           <label class="spotlight-option">
             <input type="radio" name="spotlightScheme" value="E" onchange="setSpotlightScheme('E')">
             <span class="spotlight-option-card">
               <strong>方案 E</strong>
-              <span>Magic UI 光束连接</span>
-              <small>动态虚线光束连接元素</small>
+              <span>毛玻璃光晕</span>
+              <small>多层渐变模拟毛玻璃质感</small>
             </span>
           </label>
         </div>
@@ -921,6 +1048,7 @@
   <script src="js/viz-engine.js"></script>
   <script src="js/ui-components.js"></script>
   <script src="js/letter-system.js"></script>
+  <script src="js/interaction-toggles.js"></script>
   <script src="js/router.js"></script>
   <script src="js/models-data.js"></script>
   <script src="js/modal-system.js"></script>

@@ -793,7 +793,20 @@ function escapeCodeHtml(str) {
 }
 
 /**
- * PyTorch 语法高亮（正则替换）
+ * 只在非HTML标签区域执行正则替换（防止破坏已插入的<span>标签）
+ */
+function replaceOutsideHtml(str, pattern, replacer) {
+  var parts = str.split(/(<[^>]*>)/);
+  return parts.map(function(part, i) {
+    if (i % 2 === 0) {
+      return part.replace(pattern, replacer);
+    }
+    return part;
+  }).join('');
+}
+
+/**
+ * PyTorch 语法高亮（正则替换，安全处理HTML标签）
  * @param {string} code - PyTorch 代码字符串
  * @returns {string} 高亮后的 HTML 字符串
  */
@@ -801,30 +814,38 @@ function highlightSyntax(code) {
   if (code == null) return '';
   
   try {
-    let html = escapeCodeHtml(code);
+    var html = escapeCodeHtml(code);
 
-    html = html.replace(/(#.*?)(\n|$)/g, '<span class="syn-comment">$1</span>$2');
-    html = html.replace(/("""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')/g, '<span class="syn-string">$1</span>');
-    html = html.replace(/("(?:[^"\\]|\\.)*"|\'(?:[^\'\\]|\\.)*\')/g, '<span class="syn-string">$1</span>');
+    // 1. 三引号字符串（最高优先级，必须在单行注释之前处理）
+    html = replaceOutsideHtml(html, /&quot;&quot;&quot;[\s\S]*?&quot;&quot;&quot;/g, '<span class="syn-string">$&</span>');
+    html = replaceOutsideHtml(html, /&#x27;&#x27;&#x27;[\s\S]*?&#x27;&#x27;&#x27;/g, '<span class="syn-string">$&</span>');
 
-    const keywords = ['def', 'class', 'import', 'from', 'return', 'if', 'elif', 'else', 'for', 'while', 'with', 'as', 'try', 'except', 'finally', 'raise', 'yield', 'lambda', 'pass', 'break', 'continue', 'and', 'or', 'not', 'in', 'is', 'global', 'nonlocal', 'assert', 'del'];
-    const kwPattern = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
-    html = html.replace(kwPattern, '<span class="syn-keyword">$1</span>');
+    // 2. 单行注释（# 开头，但不能在字符串内部）
+    html = replaceOutsideHtml(html, /#.*?(?=\n|$)/g, '<span class="syn-comment">$&</span>');
 
-    html = html.replace(/\b(self)\b/g, '<span class="syn-param">$1</span>');
+    // 3. 普通字符串（单引号/双引号）
+    html = replaceOutsideHtml(html, /&quot;(?:[^&quot;\\]|\\.)*&quot;/g, '<span class="syn-string">$&</span>');
+    html = replaceOutsideHtml(html, /&#x27;(?:[^&#x27;\\]|\\.)*&#x27;/g, '<span class="syn-string">$&</span>');
 
-    const classNames = ['nn\\.Module', 'nn\\.Sequential', 'nn\\.Linear', 'nn\\.Conv2d', 'nn\\.Conv1d', 'nn\\.MaxPool2d', 'nn\\.AvgPool2d', 'nn\\.Dropout', 'nn\\.ReLU', 'nn\\.Sigmoid', 'nn\\.Tanh', 'nn\\.BatchNorm2d', 'nn\\.LayerNorm', 'nn\\.Embedding', 'nn\\.Transformer', 'nn\\.MultiheadAttention', 'nn\\.CrossEntropyLoss', 'nn\\.MSELoss', 'nn\\.Softmax', 'nn\\.Flatten', 'torch', 'nn', 'F', 'MLP', 'super'];
-    const classPattern = new RegExp('\\b(' + classNames.join('|') + ')\\b', 'g');
-    html = html.replace(classPattern, '<span class="syn-class">$1</span>');
+    // 4. 关键字
+    var keywords = ['def', 'class', 'import', 'from', 'return', 'if', 'elif', 'else', 'for', 'while', 'with', 'as', 'try', 'except', 'finally', 'raise', 'yield', 'lambda', 'pass', 'break', 'continue', 'and', 'or', 'not', 'in', 'is', 'global', 'nonlocal', 'assert', 'del'];
+    html = replaceOutsideHtml(html, new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g'), '<span class="syn-keyword">$1</span>');
 
-    html = html.replace(/\b(\d+\.?\d*)\b/g, '<span class="syn-number">$1</span>');
+    // 5. self
+    html = replaceOutsideHtml(html, /\b(self)\b/g, '<span class="syn-param">$1</span>');
 
-    html = html.replace(/\b([a-zA-Z_]\w*)\s*(?=\()/g, function(match, fname) {
-      if (match.includes('span')) return match;
-      return '<span class="syn-func">' + fname + '</span>';
-    });
+    // 6. 类名
+    var classNames = ['nn\\.Module', 'nn\\.Sequential', 'nn\\.Linear', 'nn\\.Conv2d', 'nn\\.Conv1d', 'nn\\.MaxPool2d', 'nn\\.AvgPool2d', 'nn\\.Dropout', 'nn\\.ReLU', 'nn\\.Sigmoid', 'nn\\.Tanh', 'nn\\.BatchNorm2d', 'nn\\.LayerNorm', 'nn\\.Embedding', 'nn\\.Transformer', 'nn\\.MultiheadAttention', 'nn\\.CrossEntropyLoss', 'nn\\.MSELoss', 'nn\\.Softmax', 'nn\\.Flatten', 'torch', 'nn', 'F', 'MLP', 'super'];
+    html = replaceOutsideHtml(html, new RegExp('\\b(' + classNames.join('|') + ')\\b', 'g'), '<span class="syn-class">$1</span>');
 
-    html = html.replace(/([+\-*=\/%&lt;&gt;!]=?)/g, '<span class="syn-op">$1</span>');
+    // 7. 数字
+    html = replaceOutsideHtml(html, /\b(\d+\.?\d*)\b/g, '<span class="syn-number">$1</span>');
+
+    // 8. 函数调用
+    html = replaceOutsideHtml(html, /\b([a-zA-Z_]\w*)\s*(?=\()/g, '<span class="syn-func">$1</span>');
+
+    // 9. 运算符
+    html = replaceOutsideHtml(html, /(==|!=|<=|>=|->)/g, '<span class="syn-op">$1</span>');
 
     return html;
   } catch (e) {

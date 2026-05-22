@@ -278,8 +278,9 @@ function activateView(viewId) {
     const el = document.getElementById(viewId);
     if (el) {
       el.classList.add('active');
+      // 设置 tabindex 便于无障碍导航，但不调用 el.focus()
+      // 避免非交互元素获得程序化焦点产生蓝色焦点轮廓（蓝条问题）
       el.setAttribute('tabindex', '-1');
-      el.focus();
     }
   } catch (error) {
     console.warn('[Router] 激活视图失败:', error);
@@ -367,7 +368,10 @@ function showView(view, params) {
 
       // 更新 URL hash
       updateURL(view, params);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      // 仅在新页面导航时滚动到顶部（例如模型详情页）
+      if (view === 'model') {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
     } catch (error) {
       console.error('[Router] 显示视图失败:', error);
       renderNotFound();

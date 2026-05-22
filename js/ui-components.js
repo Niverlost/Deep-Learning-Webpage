@@ -495,7 +495,7 @@ function createModelCard(model, opts = {}) {
 
       <div class="model-card-footer">
         <span></span>
-        <a class="model-card-view-link" href="javascript:void(0)" role="button" tabindex="0" aria-label="查看 ${escapedName} 的完整详情">查看详情 →</a>
+        <button class="model-card-view-link" type="button" aria-label="查看 ${escapedName} 的完整详情">查看详情 →</button>
       </div>
     </div>
   </div>`;
@@ -1345,9 +1345,10 @@ function setupModelGrid(container, callbacks = {}) {
       return;
     }
 
-    // 查看详情按钮 - 阻止冒泡后直接跳转，不弹出模态框
+    // 查看详情按钮 - 阻止冒泡和默认行为后直接跳转，不弹出模态框
     const viewBtn = e.target.closest('.model-card-view-link');
     if (viewBtn) {
+      e.preventDefault();
       e.stopPropagation();
       const modelName = viewBtn.closest('.model-card')?.dataset.model;
       if (modelName) {
